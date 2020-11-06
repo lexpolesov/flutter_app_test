@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'myweb.dart';
@@ -38,6 +40,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 class BrowserPage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _BrowserPageState();
@@ -45,22 +48,22 @@ class BrowserPage extends StatefulWidget {
 
 class _BrowserPageState extends State<BrowserPage> {
   final Completer<WebViewController> _controller =
-  Completer<WebViewController>();
+      Completer<WebViewController>();
 
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-        navigationBar: CupertinoNavigationBar(middle: Text("Browser")),
+        navigationBar: CupertinoNavigationBar(middle: Text("Asna quiz")),
         child: SafeArea(
           child: WebView(
-              initialUrl: "",
-              javascriptChannels: <JavascriptChannel>[
-                _toasterJavascriptChannel(context),
-              ].toSet(),
-              onWebViewCreated: (WebViewController webViewController) {
-                _controller.complete(webViewController);
-              },
-              javascriptMode: JavascriptMode.unrestricted,
+            initialUrl: "",
+            javascriptChannels: <JavascriptChannel>[
+              _toasterJavascriptChannel(context),
+            ].toSet(),
+            onWebViewCreated: (WebViewController webViewController) {
+              _controller.complete(webViewController);
+            },
+            javascriptMode: JavascriptMode.unrestricted,
           ),
         ));
   }
@@ -76,24 +79,59 @@ class _BrowserPageState extends State<BrowserPage> {
           );
         });
   }
+
   @override
   void initState() {
     super.initState();
     _controller.future.then((controller) {
-      _loadHtmlFromAssets(controller);
+      _loadHtmlFromSD(controller);
+      // _loadHtmlOnline(controller);
+      // _loadHtmlFromAssets(controller);
     });
   }
-///sdcard/Download/content 4
+
   Future<void> _loadHtmlFromAssets(WebViewController controller) async {
-    String fileText = await rootBundle.loadString('assets/page6/scormcontent/index.html');
+    String fileText = await rootBundle.loadString('assets/page5/index.html');
     String theURI = Uri.dataFromString(fileText,
-        mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
+            mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
         .toString();
 
     setState(() {
       print(theURI);
-      controller.loadUrl(theURI);
+      controller.loadUrl(theURI); //"file:///assets/page5/index.html");
+    });
+  }
+
+  Future<void> _loadHtmlOnline(WebViewController controller) async {
+    setState(() {
+      controller.loadUrl(
+          "https://rise.articulate.com/share/40M2KcY5lKgaNPVkKSf3IxO4yD_0cr06#/lessons/vG1nrlc5NwJEy9M-gBXBEsvSpsrMg0Ms");
+    });
+  }
+
+  Future<void> _loadHtmlFromSD(WebViewController controller) async {
+    String sdPath = "";
+
+    if (Platform.isAndroid) {
+      sdPath = "file:///sdcard/Download/content_oleg/index.html";
+    }
+
+    if (Platform.isIOS) {
+      sdPath = (await getApplicationDocumentsDirectory()).path + "/Quiz";
+      bool isExist = await Directory(sdPath).exists();
+      print(isExist);
+      if (!isExist) {
+        bool isExistNew =
+            await (await Directory(sdPath).create(recursive: true)).exists();
+
+        print(isExistNew);
+      }
+      sdPath = "file://" + sdPath + "/index.html";
+    }
+
+    setState(() {
+      print(sdPath);
+      controller.loadUrl(sdPath);
     });
   }
 }
-
