@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutterapptest/permission.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -52,17 +53,31 @@ class _BrowserPageState extends State<BrowserPage> {
 
   @override
   Widget build(BuildContext context) {
+    Permissions.requestAllPermissions();
     return CupertinoPageScaffold(
         navigationBar: CupertinoNavigationBar(middle: Text("Asna quiz")),
         child: SafeArea(
           child: WebView(
             initialUrl: "",
+            initialMediaPlaybackPolicy: AutoMediaPlaybackPolicy.always_allow,
             javascriptChannels: <JavascriptChannel>[
               _toasterJavascriptChannel(context),
             ].toSet(),
             onWebViewCreated: (WebViewController webViewController) {
               _controller.complete(webViewController);
             },
+            navigationDelegate: (NavigationRequest request) {
+              String url = request.url.toString();
+              print('Page started loading: $url');
+              return NavigationDecision.navigate;
+            },
+            onPageStarted: (String url) {
+              print('Page started loading: $url');
+            },
+            onPageFinished: (String url) {
+              print('Page finished loading: $url');
+            },
+            gestureNavigationEnabled: true,
             javascriptMode: JavascriptMode.unrestricted,
           ),
         ));
@@ -105,7 +120,7 @@ class _BrowserPageState extends State<BrowserPage> {
   Future<void> _loadHtmlOnline(WebViewController controller) async {
     setState(() {
       controller.loadUrl(
-          "https://rise.articulate.com/share/40M2KcY5lKgaNPVkKSf3IxO4yD_0cr06#/lessons/vG1nrlc5NwJEy9M-gBXBEsvSpsrMg0Ms");
+          "https://rise.articulate.com/share/CyeHT-yqQBLbKyz9cU8U-l-b2jMsx8PK");
     });
   }
 
@@ -113,11 +128,11 @@ class _BrowserPageState extends State<BrowserPage> {
     String sdPath = "";
 
     if (Platform.isAndroid) {
-      sdPath = "file:///sdcard/Download/content_oleg/index.html";
+      sdPath = "file:///sdcard/Download/content_test_all/index.html";
     }
 
     if (Platform.isIOS) {
-      sdPath = (await getApplicationDocumentsDirectory()).path + "/Quiz";
+      sdPath = (await getApplicationDocumentsDirectory()).path + "/QuizAll";
       bool isExist = await Directory(sdPath).exists();
       print(isExist);
       if (!isExist) {
