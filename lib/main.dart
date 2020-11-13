@@ -1,130 +1,95 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterapptest/permission.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-import 'myweb.dart';
+Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
+ // await Permission.camera.request();
+ // await Permission.microphone.request();
+
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => new _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: BrowserPage(),
+        home: InAppWebViewPage()
     );
   }
 }
 
-class BrowserPage extends StatefulWidget {
+class InAppWebViewPage extends StatefulWidget {
   @override
-  State<StatefulWidget> createState() => _BrowserPageState();
+  _InAppWebViewPageState createState() => new _InAppWebViewPageState();
 }
 
-class _BrowserPageState extends State<BrowserPage> {
-  final Completer<WebViewController> _controller =
-      Completer<WebViewController>();
+class _InAppWebViewPageState extends State<InAppWebViewPage> {
+ // InAppWebViewController _webViewController;
 
-  @override
-  Widget build(BuildContext context) {
-    Permissions.requestAllPermissions();
-    return CupertinoPageScaffold(
-        navigationBar: CupertinoNavigationBar(middle: Text("Asna quiz")),
-        child: SafeArea(
-          child: WebView(
-            initialUrl: "",
-            initialMediaPlaybackPolicy: AutoMediaPlaybackPolicy.always_allow,
-            javascriptChannels: <JavascriptChannel>[
-              _toasterJavascriptChannel(context),
-            ].toSet(),
-            onWebViewCreated: (WebViewController webViewController) {
-              _controller.complete(webViewController);
-            },
-            navigationDelegate: (NavigationRequest request) {
-              String url = request.url.toString();
-              print('Page started loading: $url');
-              return NavigationDecision.navigate;
-            },
-            onPageStarted: (String url) {
-              print('Page started loading: $url');
-            },
-            onPageFinished: (String url) {
-              print('Page finished loading: $url');
-            },
-            gestureNavigationEnabled: true,
-            javascriptMode: JavascriptMode.unrestricted,
-          ),
-        ));
-  }
-
-  JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
-    return JavascriptChannel(
-        name: 'Print',
-        onMessageReceived: (JavascriptMessage message) {
-          // ignore: deprecated_member_use
-          print("message.message " + message.message);
-          Scaffold.of(context).showSnackBar(
-            SnackBar(content: Text(message.message)),
-          );
-        });
-  }
+  final Completer<InAppWebViewController> _webViewController =
+  Completer<InAppWebViewController>();
 
   @override
   void initState() {
     super.initState();
-    _controller.future.then((controller) {
+    _webViewController.future.then((controller) {
       _loadHtmlFromSD(controller);
       // _loadHtmlOnline(controller);
       // _loadHtmlFromAssets(controller);
     });
   }
 
-  Future<void> _loadHtmlFromAssets(WebViewController controller) async {
-    String fileText = await rootBundle.loadString('assets/page5/index.html');
-    String theURI = Uri.dataFromString(fileText,
-            mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
-        .toString();
-
-    setState(() {
-      print(theURI);
-      controller.loadUrl(theURI); //"file:///assets/page5/index.html");
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+            title: Text("InAppWebView")
+        ),
+        body: Container(
+            child: Column(children: <Widget>[
+              Expanded(
+                child: Container(
+                  child: InAppWebView(
+                      initialUrl: "",
+                     // initialUrl: "file:///sdcard/Download/content_test_all/index.html",
+                      initialOptions: InAppWebViewGroupOptions(
+                        crossPlatform: InAppWebViewOptions(
+                          mediaPlaybackRequiresUserGesture: true,
+                          debuggingEnabled: true,
+                        ),
+                        android: AndroidInAppWebViewOptions(
+                          allowContentAccess: true,
+                          allowFileAccess: true,
+                          allowFileAccessFromFileURLs: true,
+                          allowUniversalAccessFromFileURLs: true
+                        )
+                      ),
+                      onWebViewCreated: (InAppWebViewController controller) {
+                        _webViewController.complete(controller);
+                      },
+                      androidOnPermissionRequest: (InAppWebViewController controller, String origin, List<String> resources) async {
+                        return PermissionRequestResponse(resources: resources, action: PermissionRequestResponseAction.GRANT);
+                      }
+                  ),
+                ),
+              ),
+            ]))
+    );
   }
 
-  Future<void> _loadHtmlOnline(WebViewController controller) async {
-    setState(() {
-      controller.loadUrl(
-          "https://rise.articulate.com/share/CyeHT-yqQBLbKyz9cU8U-l-b2jMsx8PK");
-    });
-  }
-
-  Future<void> _loadHtmlFromSD(WebViewController controller) async {
+  Future<void> _loadHtmlFromSD(InAppWebViewController controller) async {
     String sdPath = "";
 
     if (Platform.isAndroid) {
@@ -137,7 +102,7 @@ class _BrowserPageState extends State<BrowserPage> {
       print(isExist);
       if (!isExist) {
         bool isExistNew =
-            await (await Directory(sdPath).create(recursive: true)).exists();
+        await (await Directory(sdPath).create(recursive: true)).exists();
 
         print(isExistNew);
       }
@@ -146,7 +111,28 @@ class _BrowserPageState extends State<BrowserPage> {
 
     setState(() {
       print(sdPath);
-      controller.loadUrl(sdPath);
+      controller.loadUrl(url: sdPath);
     });
   }
+
+
+  Future<void> _loadHtmlFromAssets(InAppWebViewController controller) async {
+    String fileText = await rootBundle.loadString('assets/page5/index.html');
+    String theURI = Uri.dataFromString(fileText,
+        mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
+        .toString();
+
+    setState(() {
+      print(theURI);
+      controller.loadUrl(url: theURI); //"file:///assets/page5/index.html");
+    });
+  }
+
+  Future<void> _loadHtmlOnline(InAppWebViewController controller) async {
+    setState(() {
+      controller.loadUrl(url:
+          "https://rise.articulate.com/share/CyeHT-yqQBLbKyz9cU8U-l-b2jMsx8PK");
+    });
+  }
+
 }
