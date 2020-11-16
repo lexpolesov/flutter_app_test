@@ -4,14 +4,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:html/parser.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:html/parser.dart' show parse;
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
- // await Permission.camera.request();
- // await Permission.microphone.request();
+  // await Permission.camera.request();
+  // await Permission.microphone.request();
 
   runApp(MyApp());
 }
@@ -36,7 +39,7 @@ class InAppWebViewPage extends StatefulWidget {
 }
 
 class _InAppWebViewPageState extends State<InAppWebViewPage> {
- // InAppWebViewController _webViewController;
+  // InAppWebViewController _webViewController;
 
   final Completer<InAppWebViewController> _webViewController =
   Completer<InAppWebViewController>();
@@ -62,25 +65,98 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
               Expanded(
                 child: Container(
                   child: InAppWebView(
+
+                      onLoadStart: (InAppWebViewController controller,
+                          String url) {
+                        print("test onLoadStart");
+                      },
+                      onAjaxProgress: (InAppWebViewController controller,
+                          AjaxRequest ajaxRequest) {
+                        print("test onAjaxProgress");
+                      },
+
+                      onCreateWindow: (InAppWebViewController controller,
+                          CreateWindowRequest createWindowRequest) {
+                        print("test onCreateWindow");
+                        return;
+                      },
+                      onPageCommitVisible: (InAppWebViewController controller,
+                          String url) {
+                        print("test onPageCommitVisible");
+                      },
+                      onTitleChanged: (InAppWebViewController controller,
+                          String title) {
+                        print("test onTitleChanged");
+                      },
+                      onLoadResource: (InAppWebViewController controller,
+                          LoadedResource resource) {
+                        print("test onLoadResource");
+                      },
+                      onProgressChanged: (InAppWebViewController controller,
+                          int progress) {
+                        print("test onProgressChanged");
+                      },
+                      onPrint: (InAppWebViewController controller, String url) {
+                        print("test onPrint");
+                      },
+
                       initialUrl: "",
-                     // initialUrl: "file:///sdcard/Download/content_test_all/index.html",
+                      // initialUrl: "file:///sdcard/Download/content_test_all/index.html",
                       initialOptions: InAppWebViewGroupOptions(
-                        crossPlatform: InAppWebViewOptions(
-                          mediaPlaybackRequiresUserGesture: true,
-                          debuggingEnabled: true,
-                        ),
-                        android: AndroidInAppWebViewOptions(
-                          allowContentAccess: true,
-                          allowFileAccess: true,
-                          allowFileAccessFromFileURLs: true,
-                          allowUniversalAccessFromFileURLs: true
-                        )
+                          crossPlatform: InAppWebViewOptions(
+                            mediaPlaybackRequiresUserGesture: true,
+                            debuggingEnabled: true,
+                          ),
+                          android: AndroidInAppWebViewOptions(
+                              allowContentAccess: true,
+                              allowFileAccess: true,
+                              allowFileAccessFromFileURLs: true,
+                              allowUniversalAccessFromFileURLs: true
+                          )
                       ),
                       onWebViewCreated: (InAppWebViewController controller) {
                         _webViewController.complete(controller);
+                         },
+                      onLoadStop: (InAppWebViewController controller,
+                          String url) {
+                        print("test onLoadStop");
+                        controller.getHtml().then((value) {
+                          print("test getHtml");
+                          var document = parse(value);
+                         // var lsitQuery = document.querySelectorAll("progress-bar__percentage-bottom");
+                          var frView = document.getElementsByClassName("fr-view");
+                          print("frView");
+                          print(document.getElementsByClassName("fr-view").length);
+
+
+                          if (frView.isNotEmpty){
+                            frView.forEach((element) {
+                              print(element.text);
+                            });
+                          }
+
+                          var progressBar = document.getElementsByClassName("progress-bar__percentage-bottom");
+                          print("progressBar");
+                          print(progressBar.length);
+
+
+                          if (progressBar.isNotEmpty){
+                            progressBar.forEach((element) {
+                              print(element.text);
+                            });
+                          }
+                         // print(document.getElementsByClassName("fr-view").first);
+
+                        });
+                     //   controller.evaluateJavascript(
+                     //       source: "(function(){Flutter.postMessage(window.document.body.outerHTML)})();");
+                    //    controller.addJavaScriptHandler(handlerName: "Flutter", callback: printJava());
                       },
-                      androidOnPermissionRequest: (InAppWebViewController controller, String origin, List<String> resources) async {
-                        return PermissionRequestResponse(resources: resources, action: PermissionRequestResponseAction.GRANT);
+                      androidOnPermissionRequest: (
+                          InAppWebViewController controller, String origin,
+                          List<String> resources) async {
+                        return PermissionRequestResponse(resources: resources,
+                            action: PermissionRequestResponseAction.GRANT);
                       }
                   ),
                 ),
@@ -88,6 +164,20 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
             ]))
     );
   }
+  void printJava(){
+    print("print Java");
+  }
+
+  JavascriptChannel _extractDataJSChannel(BuildContext context) {
+    return JavascriptChannel(
+      name: 'Flutter',
+      onMessageReceived: (JavascriptMessage message) {
+        String pageBody = message.message;
+        print('page body: $pageBody');
+      },
+    );
+  }
+
 
   Future<void> _loadHtmlFromSD(InAppWebViewController controller) async {
     String sdPath = "";
@@ -112,6 +202,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
     setState(() {
       print(sdPath);
       controller.loadUrl(url: sdPath);
+      controller.getHtml().then((value) => print(value));
     });
   }
 
@@ -131,7 +222,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
   Future<void> _loadHtmlOnline(InAppWebViewController controller) async {
     setState(() {
       controller.loadUrl(url:
-          "https://rise.articulate.com/share/CyeHT-yqQBLbKyz9cU8U-l-b2jMsx8PK");
+      "https://rise.articulate.com/share/CyeHT-yqQBLbKyz9cU8U-l-b2jMsx8PK");
     });
   }
 
