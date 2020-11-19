@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutterapptest/parse_articulate/button_download.dart';
+import 'package:flutterapptest/parse_articulate/parse_articulate_widget.dart';
 import 'package:html/parser.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -27,9 +29,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        home: InAppWebViewPage()
-    );
+    return MaterialApp(home: InAppWebViewPage());
   }
 }
 
@@ -41,27 +41,27 @@ class InAppWebViewPage extends StatefulWidget {
 class _InAppWebViewPageState extends State<InAppWebViewPage> {
   // InAppWebViewController _webViewController;
 
-  final Completer<InAppWebViewController> _webViewController =
-  Completer<InAppWebViewController>();
+  InAppWebViewController _webViewController;
+  bool loadnext = true;
 
   @override
   void initState() {
     super.initState();
-    _webViewController.future.then((controller) {
-      _loadHtmlFromSD(controller);
-      // _loadHtmlOnline(controller);
-      // _loadHtmlFromAssets(controller);
-    });
+    //  _webViewController.future.then((controller) {
+    //  _loadHtmlFromSD(_webViewController);
+    // _loadHtmlOnline(controller);
+    // _loadHtmlFromAssets(controller);
+    //  });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-            title: Text("InAppWebView")
-        ),
-        body: Container(
+        appBar: AppBar(title: Text("InAppWebView")),
+        body: Container(height: 100, child: ButtonDownloadArticulate())
+        /*Container(
             child: Column(children: <Widget>[
+
               Expanded(
                 child: Container(
                   child: InAppWebView(
@@ -95,6 +95,26 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                       onProgressChanged: (InAppWebViewController controller,
                           int progress) {
                         print("test onProgressChanged");
+                        if((progress == 100) && loadnext){
+                          controller.getHtml().then((value) {
+                            var doc = parse(value);
+                            var searchTest = doc
+                                .getElementsByClassName("overview-list-item__link");
+                            if ((searchTest != null) && (searchTest.isNotEmpty)) {
+                              print("searchTest.first.text");
+                              var sfsd = searchTest.first.attributes["href"];
+                              print(sfsd);
+
+                              controller.getUrl().then((value) {
+                                print(value  + sfsd.substring(2));
+                                controller.loadUrl(url: (value  + sfsd.substring(2)));
+                                loadnext = false;
+                              });
+
+                            }
+                          });
+                        }
+
                       },
                       onPrint: (InAppWebViewController controller, String url) {
                         print("test onPrint");
@@ -115,11 +135,14 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                           )
                       ),
                       onWebViewCreated: (InAppWebViewController controller) {
-                        _webViewController.complete(controller);
-                         },
+                       // _webViewController.complete(controller);
+                        _webViewController = controller;
+                        _loadHtmlFromSD(_webViewController);
+
+                      },
                       onLoadStop: (InAppWebViewController controller,
                           String url) {
-                        print("test onLoadStop");
+                        print("test onLoadStop");/*
                         controller.getHtml().then((value) {
                           print("test getHtml");
                           var document = parse(value);
@@ -147,7 +170,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                           }
                          // print(document.getElementsByClassName("fr-view").first);
 
-                        });
+                        });*/
                      //   controller.evaluateJavascript(
                      //       source: "(function(){Flutter.postMessage(window.document.body.outerHTML)})();");
                     //    controller.addJavaScriptHandler(handlerName: "Flutter", callback: printJava());
@@ -161,10 +184,12 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                   ),
                 ),
               ),
-            ]))
-    );
+              ParseArticulateWidget(controller: _webViewController,)
+            ]))*/
+        );
   }
-  void printJava(){
+
+  void printJava() {
     print("print Java");
   }
 
@@ -177,7 +202,6 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
       },
     );
   }
-
 
   Future<void> _loadHtmlFromSD(InAppWebViewController controller) async {
     String sdPath = "";
@@ -192,7 +216,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
       print(isExist);
       if (!isExist) {
         bool isExistNew =
-        await (await Directory(sdPath).create(recursive: true)).exists();
+            await (await Directory(sdPath).create(recursive: true)).exists();
 
         print(isExistNew);
       }
@@ -202,15 +226,14 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
     setState(() {
       print(sdPath);
       controller.loadUrl(url: sdPath);
-      controller.getHtml().then((value) => print(value));
+      // controller.getHtml().then((value) => print(value));
     });
   }
-
 
   Future<void> _loadHtmlFromAssets(InAppWebViewController controller) async {
     String fileText = await rootBundle.loadString('assets/page5/index.html');
     String theURI = Uri.dataFromString(fileText,
-        mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
+            mimeType: 'text/html', encoding: Encoding.getByName('utf-8'))
         .toString();
 
     setState(() {
@@ -221,9 +244,9 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   Future<void> _loadHtmlOnline(InAppWebViewController controller) async {
     setState(() {
-      controller.loadUrl(url:
-      "https://rise.articulate.com/share/CyeHT-yqQBLbKyz9cU8U-l-b2jMsx8PK");
+      controller.loadUrl(
+          url:
+              "https://rise.articulate.com/share/CyeHT-yqQBLbKyz9cU8U-l-b2jMsx8PK");
     });
   }
-
 }
