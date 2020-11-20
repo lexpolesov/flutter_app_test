@@ -9,14 +9,14 @@ class ParseFindQuestionView extends StatefulWidget {
   final bool isOffline;
   final Function(List<CourseCountQuestion>) onFinishedParse;
 
-  const ParseFindQuestionView({this.url = "", this.isOffline = true, this.onFinishedParse});
+  const ParseFindQuestionView(
+      {this.url = "", this.isOffline = true, this.onFinishedParse});
 
   @override
   State<StatefulWidget> createState() => _ParseFindQuestionViewState();
 }
 
 class _ParseFindQuestionViewState extends State<ParseFindQuestionView> {
-
   ParseFindQuestionCount packageParse;
 
   InAppWebViewController _webViewController;
@@ -24,7 +24,8 @@ class _ParseFindQuestionViewState extends State<ParseFindQuestionView> {
   @override
   void initState() {
     super.initState();
-    packageParse = ParseFindQuestionCount(onFinishedParse: widget.onFinishedParse);
+    packageParse =
+        ParseFindQuestionCount(onFinishedParse: widget.onFinishedParse);
   }
 
   @override

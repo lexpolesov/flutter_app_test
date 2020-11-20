@@ -147,6 +147,8 @@ class ParseFindQuestionCount {
     } else {
       statusLoad = StatusParseUnzippingStatus.finishParseQuiz;
       onFinishedParse(_quizUrls);
+      _controller.stopLoading();
+      _controller.clearCache();
     }
   }
 

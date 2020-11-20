@@ -46,6 +46,9 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
   InAppWebViewController _webViewController;
   bool loadnext = true;
 
+  bool urlLoaded = false;
+  String url = "";
+
   @override
   void initState() {
     super.initState();
@@ -54,7 +57,15 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
     // _loadHtmlOnline(controller);
     // _loadHtmlFromAssets(controller);
     //  });
+    getUrl().then((value) {
+      setState(() {
+        urlLoaded = true;
+        url = value;
+      });
+    });
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +74,9 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
       body: Container(
           height: 60,
           width: MediaQuery.of(context).size.width * 0.7,
-          child: ButtonCourse("hren", isOffline: true)),
+          child: urlLoaded
+              ? ButtonCourse(url, isOffline: true)
+              : CircularProgressIndicator()),
       /*Container(
             child: Column(children: <Widget>[
 
@@ -253,5 +266,28 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
           url:
               "https://rise.articulate.com/share/CyeHT-yqQBLbKyz9cU8U-l-b2jMsx8PK");
     });
+  }
+
+  Future<String> getUrl() async {
+    String sdPath = "";
+
+    if (Platform.isAndroid) {
+      sdPath = "file:///sdcard/Download/content_test_all/index.html";
+    }
+
+    if (Platform.isIOS) {
+      sdPath = (await getApplicationDocumentsDirectory()).path + "/QuizAll";
+      bool isExist = await Directory(sdPath).exists();
+      print(isExist);
+      if (!isExist) {
+        bool isExistNew =
+            await (await Directory(sdPath).create(recursive: true)).exists();
+
+        print(isExistNew);
+      }
+      sdPath = "file://" + sdPath + "/index.html";
+    }
+    return sdPath;
+    // return "file:///Users/lex/Library/Developer/CoreSimulator/Devices/5AF42257-85D1-4776-B3A0-EFE7DF074D38/data/Containers/Data/Application/C75DA170-4FEB-4AF1-B347-4B50D32DEB20/Documents/QuizAll/index.html#/lessons/SzlvuoeY009MZ-gwKL8Kvl7RwwFM7JgD";
   }
 }

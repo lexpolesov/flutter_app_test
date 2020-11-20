@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'button_course_body.dart';
 import 'parse_unzipping_course/common.dart';
+import 'parse_unzipping_course/parse_find_question_view.dart';
 
 class ButtonCourse extends StatefulWidget {
   final String url;
@@ -33,12 +34,19 @@ class _ButtonCourseState extends State<ButtonCourse> {
     return Container(
       height: 60,
       color: Colors.green,
-      child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () {
-            changeStatusClick();
-          },
-          child: ButtonCourseBody(status)),
+      child: Stack(
+        children: [
+          if (status == StatusButtonCourse.PARSE_COURSE)
+            ParseFindQuestionView(
+                url: widget.url, onFinishedParse: resultParseCourse),
+          GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                changeStatusClick();
+              },
+              child: ButtonCourseBody(status)),
+        ],
+      ),
     );
   }
 
@@ -79,9 +87,6 @@ class _ButtonCourseState extends State<ButtonCourse> {
         if (status == StatusButtonCourse.UNZIP) {
           startUnzip();
         }
-        if (status == StatusButtonCourse.PARSE_COURSE) {
-          startParseQuestionCount();
-        }
         print("changeState " + status.toString());
       });
     }
@@ -106,6 +111,26 @@ class _ButtonCourseState extends State<ButtonCourse> {
     Future.delayed(Duration(seconds: 1)).then((value) {
       changeState(StatusButtonCourse.READY);
     });
+  }
+
+  void resultParseCourse(List<CourseCountQuestion> resultQuizList) {
+    changeState(StatusButtonCourse.READY);
+
+    print("onFinish parse data");
+
+    String enableQuiz = "Наличие теста: ";
+    if (resultQuizList.isNotEmpty) {
+      enableQuiz = enableQuiz + "Да";
+    } else {
+      enableQuiz = enableQuiz + "Нет";
+    }
+    print(enableQuiz);
+    int countQuestion = 0;
+    resultQuizList.forEach((element) {
+      print(element.link + " " + element.countQuestion.toString());
+      countQuestion = countQuestion + element.countQuestion;
+    });
+    print("Всего вопросов " + countQuestion.toString());
   }
 
   void openWebView() {
