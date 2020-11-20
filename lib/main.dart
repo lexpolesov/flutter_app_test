@@ -12,7 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:html/parser.dart' show parse;
 
-import 'parse_articulate/button_course.dart';
+import 'parse_articulate/button_course/button_course.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();

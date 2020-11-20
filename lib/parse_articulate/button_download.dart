@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutterapptest/parse_articulate/parse_unzipping_course/parse_find_question_count.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'parse_unzipping_course/common.dart';
+import 'button_course/parse_unzipping_course/common.dart';
+import 'button_course/parse_unzipping_course/parse_find_question_count.dart';
 
 class ButtonDownloadArticulate extends StatefulWidget {
   @override
