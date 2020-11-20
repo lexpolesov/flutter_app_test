@@ -273,6 +273,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
     if (Platform.isAndroid) {
       sdPath = "file:///sdcard/Download/content_test_all/index.html";
+      //sdPath = "file:///sdcard/Download/content_etalon/index.html";
     }
 
     if (Platform.isIOS) {

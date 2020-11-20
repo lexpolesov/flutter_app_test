@@ -17,7 +17,6 @@ enum StatusParseUnzippingStatus {
   searchIndex,
   foundIndex,
   loadQuiz,
-  clickStartQuiz,
   finishParseQuiz
 }
 
