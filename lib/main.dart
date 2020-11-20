@@ -12,6 +12,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:html/parser.dart' show parse;
 
+import 'parse_articulate/button_course.dart';
+
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -57,9 +59,12 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("InAppWebView")),
-        body: Container(height: 100, child: ButtonDownloadArticulate())
-        /*Container(
+      appBar: AppBar(title: Text("InAppWebView")),
+      body: Container(
+          height: 60,
+          width: MediaQuery.of(context).size.width * 0.7,
+          child: ButtonCourse("hren", isOffline: true)),
+      /*Container(
             child: Column(children: <Widget>[
 
               Expanded(
@@ -186,7 +191,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
               ),
               ParseArticulateWidget(controller: _webViewController,)
             ]))*/
-        );
+    );
   }
 
   void printJava() {
