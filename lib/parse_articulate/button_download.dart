@@ -103,15 +103,6 @@ class _ButtonDownloadArticulateState extends State<ButtonDownloadArticulate> {
     );
   }
 
-  void loadUrl() {
-    if (_webViewController != null) {
-      //  _webViewController.loadUrl(url: urlTest);
-
-      // _webViewController.is
-
-    }
-  }
-
   void onFinishParse(List<CourseCountQuestion> quizList) {
     print("onFinish parse data");
     _webViewController.stopLoading();

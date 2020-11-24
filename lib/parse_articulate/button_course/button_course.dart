@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutterapptest/parse_articulate/articulate_webview/articulate_webview.dart';
 
 import 'button_course_body.dart';
 import 'parse_unzipping_course/common.dart';
@@ -22,7 +23,9 @@ class _ButtonCourseState extends State<ButtonCourse> {
   void initState() {
     super.initState();
     if (widget.isOffline) {
-      status = StatusButtonCourse.LINK;
+      //todo debug
+      //status = StatusButtonCourse.LINK;
+      status = StatusButtonCourse.READY;
     } else {
       status = StatusButtonCourse.PARSE_COURSE;
       startParseQuestionCount();
@@ -135,5 +138,9 @@ class _ButtonCourseState extends State<ButtonCourse> {
 
   void openWebView() {
     print("openWebView");
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ArticulateWebView(widget.url)),
+    );
   }
 }
