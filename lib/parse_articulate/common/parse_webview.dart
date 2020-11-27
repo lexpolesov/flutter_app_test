@@ -1,10 +1,10 @@
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 abstract class ParseWebView {
-  InAppWebViewController _controller;
+  InAppWebViewController controller;
 
-  void addController(InAppWebViewController controller) {
-    _controller = controller;
+  void addController(InAppWebViewController webViewController) {
+    controller = webViewController;
     print("ParseWebView addController");
   }
 
