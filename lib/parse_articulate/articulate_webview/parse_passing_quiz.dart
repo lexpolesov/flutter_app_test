@@ -11,13 +11,16 @@ class ParsePassingQuiz extends ParseWebView {
   final String _classQuizCardActive = "quiz-card quiz-card--active";
   final String _classQuizCardFeedback = "quiz-card__feedback";
   final String _classQuizEnd = "quiz-end";
-
+  final String _classArticulateExit = "articulate-exit";
+  final String _classOverviewList = "overview-list";
+  final String _classLessonListsList = "lesson-lists__list";
   final String _classInCorrectResult = "icon icon-Master-06";
   final String _classCorrectResult = "icon icon-Master-05";
 
   //тэги для консоли
   static const String _consoleButtonClick = "Quiz Button Start Quiz";
   static const String _consoleTagDomModelChanged = "DOM model changed";
+  static const String _consoleTagDomExitButtonClick = "Quiz Button Exit";
 
   static const String _splitterLessons = "lessons/";
 
@@ -27,8 +30,9 @@ class ParsePassingQuiz extends ParseWebView {
 
   final Function(PassingQuiz) onChangePassing;
   final Function(PassingQuiz) onFinishPassing;
+  final Function() onExit;
 
-  ParsePassingQuiz({this.onChangePassing, this.onFinishPassing});
+  ParsePassingQuiz({this.onChangePassing, this.onFinishPassing, this.onExit});
 
   //когда создалась вэб вью добавляем контроллер для получения данных
   void addController(InAppWebViewController webController) {
@@ -42,7 +46,30 @@ class ParsePassingQuiz extends ParseWebView {
   @override
   void onLoadStop(String url) {
     final String _mutationObserver =
-        """var observer = new MutationObserver(function(mutations) { console.log('$_consoleTagDomModelChanged');});
+    """var observer = new MutationObserver(function(mutations) { 
+        console.log('$_consoleTagDomModelChanged');
+        var articulateExit = document.getElementsByClassName('$_classArticulateExit');
+        var menuList = document.getElementsByClassName('$_classOverviewList');
+        if (menuList.length < 1) {
+          menuList = document.getElementsByClassName('$_classLessonListsList');
+        }
+        if (menuList.length > 0) {
+          if (articulateExit.length == 0) {
+            var textItem = document.createElement("div");
+            textItem.setAttribute('class', "overview-list-item");
+            textItem.appendChild(document.createTextNode("Выход"));
+
+            var articulateExit = document.createElement("button");
+            articulateExit.setAttribute('class', '$_classArticulateExit');
+            articulateExit.appendChild(textItem);
+
+            articulateExit.onclick = function() {
+              console.log('$_consoleTagDomExitButtonClick');
+            }
+            menuList[0].appendChild(articulateExit);
+          }
+        }
+        });
           observer.observe(document.documentElement, {
               attributes: true,
               characterData: true,
@@ -66,6 +93,9 @@ class ParsePassingQuiz extends ParseWebView {
         break;
       case _consoleButtonClick:
         createNewQuiz = true;
+        break;
+      case _consoleTagDomExitButtonClick:
+        if(onExit != null) onExit();
         break;
     }
   }
@@ -91,8 +121,8 @@ class ParsePassingQuiz extends ParseWebView {
   }
 
   //разбор страницы
-  void parsePage() async {
-    controller.getHtml().then((stringHtml) async {
+  void parsePage() {
+    controller.getHtml().then((stringHtml) {
       dom.Document documentHtml = parse(stringHtml);
 
       //ищем кнопку старт курса, если находим вешаем слушатель
@@ -110,12 +140,15 @@ class ParsePassingQuiz extends ParseWebView {
         controller.evaluateJavascript(source: _scriptButtonOnClick);
       }
 
+
+
+
       //если пользователь нажал на старт, создает объект для записи результатов прохождения
       if (createNewQuiz) createAttempt(documentHtml);
 
       ////разбираем карточку вопроса
       var searchQuizCards =
-          documentHtml.getElementsByClassName(_classQuizCardActive);
+      documentHtml.getElementsByClassName(_classQuizCardActive);
       if (searchQuizCards.isNotEmpty) {
         searchQuizCards.forEach((element) {
           var item = parseCard(element);
@@ -150,18 +183,18 @@ class ParsePassingQuiz extends ParseWebView {
     }
 
     var searchBlockFeedBack =
-        item.getElementsByClassName(_classQuizCardFeedback);
+    item.getElementsByClassName(_classQuizCardFeedback);
     if (searchBlockFeedBack.isNotEmpty) {
       searchBlockFeedBack.forEach((element) {
         if (element.attributes['aria-hidden'] == 'false') {
           var searchInCorrectResult =
-              element.getElementsByClassName(_classInCorrectResult);
+          element.getElementsByClassName(_classInCorrectResult);
           if (searchInCorrectResult.isNotEmpty) {
             status = StatusPassingQuizItem.incorrect;
           }
 
           var searchCorrectResult =
-              item.getElementsByClassName(_classCorrectResult);
+          item.getElementsByClassName(_classCorrectResult);
           if (searchCorrectResult.isNotEmpty) {
             status = StatusPassingQuizItem.correct;
           }
@@ -191,7 +224,7 @@ class ParsePassingQuiz extends ParseWebView {
       int findIndexOf = textQuestionCounter.indexOf("/");
       if (findIndexOf != -1) {
         String countQuestionAll =
-            textQuestionCounter.substring(findIndexOf + 1);
+        textQuestionCounter.substring(findIndexOf + 1);
         int count = int.tryParse(countQuestionAll);
         return count;
       }

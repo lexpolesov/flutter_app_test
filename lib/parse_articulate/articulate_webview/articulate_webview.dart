@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutterapptest/parse_articulate/articulate_webview/parse_passing_quiz.dart';
 import 'package:flutterapptest/parse_articulate/common/parse_webview.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart';
 
 class ArticulateWebView extends StatefulWidget {
   final String url;
@@ -24,8 +26,10 @@ class _ArticulateWebViewState extends State<ArticulateWebView> {
   void initState() {
     super.initState();
     passingQuizList = [];
-    parsing =
-        ParsePassingQuiz(onChangePassing: onChange, onFinishPassing: onFinish);
+    parsing = ParsePassingQuiz(
+        onChangePassing: onChange,
+        onFinishPassing: onFinish,
+        onExit: exitClick);
   }
 
   @override
@@ -97,18 +101,21 @@ class _ArticulateWebViewState extends State<ArticulateWebView> {
 
   void addPassingToList(PassingQuiz passingChange) {
     var searchItem = passingQuizList.firstWhere(
-            (element) => element.uuid == passingChange.uuid,
+        (element) => element.uuid == passingChange.uuid,
         orElse: () => null);
 
     if (searchItem != null) {
       searchItem = passingChange;
-    }
-    else {
+    } else {
       passingQuizList.add(passingChange);
     }
 
     passingQuizList.forEach((element) {
       element.printPassing();
     });
+  }
+
+  void exitClick() {
+    Navigator.pop(context);
   }
 }
