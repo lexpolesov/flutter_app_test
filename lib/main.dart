@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutterapptest/parse_articulate/button_download.dart';
-import 'package:flutterapptest/parse_articulate/parse_articulate_widget.dart';
+import 'package:flutterapptest/old/button_download.dart';
+import 'package:flutterapptest/old/parse_articulate_widget.dart';
 import 'package:html/parser.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,6 +17,9 @@ import 'parse_articulate/button_course/button_course.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FlutterDownloader.initialize(
+      debug: true // optional: set false to disable printing logs to console
+  );
 
   // await Permission.camera.request();
   // await Permission.microphone.request();
@@ -48,6 +52,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   bool urlLoaded = false;
   String url = "";
+  String urlDownload = "https://www.7-zip.org/a/7za920.zip";//"https://static.tildacdn.com/tild3537-6439-4438-a566-333966303539/logo.svg";
 
   @override
   void initState() {
@@ -75,7 +80,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
           height: 60,
           width: MediaQuery.of(context).size.width * 0.7,
           child: urlLoaded
-              ? ButtonCourse(url, isOffline: true)
+              ? ButtonCourse(url, urlDownload, isOffline: true)
               : CircularProgressIndicator()),
       /*Container(
             child: Column(children: <Widget>[
