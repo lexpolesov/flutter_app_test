@@ -52,7 +52,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   bool urlLoaded = false;
   String url = "";
-  String urlDownload = "https://www.7-zip.org/a/7za920.zip";//"https://static.tildacdn.com/tild3537-6439-4438-a566-333966303539/logo.svg";
+  String urlDownload = "https://pfizer-revmo-backend.madbrains.ru/storage/files/i5Jw6CdWY4fRIflknegRv6hYWLso0ftBiGpwcWRR.zip";//"https://www.7-zip.org/a/7za920.zip";//"https://static.tildacdn.com/tild3537-6439-4438-a566-333966303539/logo.svg";
 
   @override
   void initState() {

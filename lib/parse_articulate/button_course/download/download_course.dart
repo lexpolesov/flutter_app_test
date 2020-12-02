@@ -99,4 +99,8 @@ class DownloadCourse {
   String getFileName() {
     return _localPath + Platform.pathSeparator + _filename;
   }
+
+  String getPath() {
+    return _localPath + Platform.pathSeparator;
+  }
 }
