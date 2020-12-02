@@ -12,8 +12,10 @@ class ButtonCourse extends StatefulWidget {
   final String url;
   final String urlArchive;
   final bool isOffline;
+  final int idCourse;
 
-  const ButtonCourse(this.url, this.urlArchive, {this.isOffline = true});
+  const ButtonCourse(this.url, this.urlArchive, this.idCourse,
+      {this.isOffline = true});
 
   @override
   State<StatefulWidget> createState() => _ButtonCourseState();
@@ -32,7 +34,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
       status = StatusButtonCourse.LINK;
       // status = StatusButtonCourse.READY;
       assistantDownloadCourse =
-          DownloadCourse(widget.urlArchive, onChangeDownload);
+          DownloadCourse(widget.urlArchive, onChangeDownload, idCourse: widget.idCourse);
     } else {
       status = StatusButtonCourse.PARSE_COURSE;
       startParseQuestionCount();
@@ -120,7 +122,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
   Future<void> startUnzip() async {
     print("startUnzip");
     Future.delayed(Duration(seconds: 1)).then((value) {
-    //  changeState(StatusButtonCourse.PARSE_COURSE);
+      //  changeState(StatusButtonCourse.PARSE_COURSE);
     });
   }
 
@@ -163,6 +165,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
     switch (status.value) {
       case 3:
         changeState(StatusButtonCourse.UNZIP);
+        print("filename " + assistantDownloadCourse.getFileName());
         break;
       case 4:
         changeState(StatusButtonCourse.DOWNLOAD_ERROR);

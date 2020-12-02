@@ -80,7 +80,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
           height: 60,
           width: MediaQuery.of(context).size.width * 0.7,
           child: urlLoaded
-              ? ButtonCourse(url, urlDownload, isOffline: true)
+              ? ButtonCourse(url, urlDownload, 55, isOffline: true, )
               : CircularProgressIndicator()),
       /*Container(
             child: Column(children: <Widget>[

@@ -10,33 +10,41 @@ class DownloadCourse {
   final String urlDownload;
   final Function(String, DownloadTaskStatus, int) onChangeDownload;
 
-  DownloadCourse(this.urlDownload, this.onChangeDownload);
+  static const String _filename = "archive.zip";
+  static const String _pathCourse = "Courses";
 
-  bool _isLoading;
-  bool _permissionReady;
+  final int idCourse;
+
+  DownloadCourse(this.urlDownload, this.onChangeDownload, {this.idCourse});
+
   String _localPath;
   String taskId;
   ReceivePort _port = ReceivePort();
 
   Future<void> startDownload() async {
-
     await _prepare();
     _bindBackgroundIsolate();
 
     FlutterDownloader.registerCallback(downloadCallback);
 
-     taskId = await FlutterDownloader.enqueue(
+    taskId = await FlutterDownloader.enqueue(
       url: urlDownload,
       savedDir: _localPath,
-      showNotification: true, // show download progress in status bar (for Android)
-      openFileFromNotification: true, // click on notification to open downloaded file (for Android)
+      fileName: _filename,
+      showNotification: false,
+      // show download progress in status bar (for Android)
+      openFileFromNotification:
+          false, // click on notification to open downloaded file (for Android)
     );
-
   }
 
   Future<Null> _prepare() async {
-
-    _localPath = (await _findLocalPath()) + Platform.pathSeparator + 'Download';
+    String idPath = idCourse.toString();
+    _localPath = (await _findLocalPath()) +
+        Platform.pathSeparator +
+        _pathCourse +
+        Platform.pathSeparator +
+        idPath;
 
     final savedDir = Directory(_localPath);
 
@@ -47,8 +55,6 @@ class DownloadCourse {
     }
   }
 
-
-
   Future<String> _findLocalPath() async {
     final directory = Platform.isAndroid
         ? await getExternalStorageDirectory()
@@ -56,10 +62,14 @@ class DownloadCourse {
     return directory.path;
   }
 
-
   void _bindBackgroundIsolate() {
-
-    IsolateNameServer.registerPortWithName(_port.sendPort, 'downloader_send_port');
+    bool isSuccess = IsolateNameServer.registerPortWithName(
+        _port.sendPort, 'downloader_send_port');
+    if (!isSuccess) {
+      unbindBackgroundIsolate();
+      _bindBackgroundIsolate();
+      return;
+    }
     _port.listen((dynamic data) {
       String id = data[0];
       DownloadTaskStatus status = data[1];
@@ -67,19 +77,14 @@ class DownloadCourse {
       //setState((){ });
       if (onChangeDownload != null) onChangeDownload(id, status, progress);
       print("progress 2 " + progress.toString());
-
     });
-
   }
 
   static void downloadCallback(
       String id, DownloadTaskStatus status, int progress) {
     final SendPort send =
-    IsolateNameServer.lookupPortByName('downloader_send_port');
+        IsolateNameServer.lookupPortByName('downloader_send_port');
     send.send([id, status, progress]);
-
-   // if(onChangeDownload != null)
-
     print("progress " + progress.toString());
   }
 
@@ -87,13 +92,11 @@ class DownloadCourse {
     IsolateNameServer.removePortNameMapping('downloader_send_port');
   }
 
-  void retryDownLoad(){
-
+  void retryDownLoad() {
     FlutterDownloader.retry(taskId: taskId);
-
   }
 
-
+  String getFileName() {
+    return _localPath + Platform.pathSeparator + _filename;
+  }
 }
-
-
