@@ -38,8 +38,9 @@ class _ButtonCourseState extends State<ButtonCourse> {
       //todo debug
       status = StatusButtonCourse.LINK;
       // status = StatusButtonCourse.READY;
-      assistantDownloadCourse =
-          DownloadCourse(widget.urlArchive, onChangeDownload, idCourse: widget.idCourse);
+      assistantDownloadCourse = DownloadCourse(
+          widget.urlArchive, onChangeDownload,
+          idCourse: widget.idCourse);
     } else {
       status = StatusButtonCourse.PARSE_COURSE;
       startParseQuestionCount();
@@ -62,7 +63,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
         children: [
           if (status == StatusButtonCourse.PARSE_COURSE)
             ParseFindQuestionView(
-                url: widget.url, onFinishedParse: resultParseCourse),
+                url: zipUrl, onFinishedParse: resultParseCourse),
           GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: () {
@@ -169,9 +170,9 @@ class _ButtonCourseState extends State<ButtonCourse> {
   void onChangeDownload(String id, DownloadTaskStatus status, int progress) {
     switch (status.value) {
       case 3:
-
         changeState(StatusButtonCourse.UNZIP);
-        unZip(assistantDownloadCourse.getFileName(), assistantDownloadCourse.getPath());
+        unZip(assistantDownloadCourse.getFileName(),
+            assistantDownloadCourse.getPath());
         print("filename " + assistantDownloadCourse.getFileName());
         break;
       case 4:
@@ -181,7 +182,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
     }
   }
 
-  void unZip(String filename, String path){
+  void unZip(String filename, String path) {
     // Read the Zip file from disk.
     final bytes = File(filename).readAsBytesSync();
 
@@ -197,17 +198,14 @@ class _ButtonCourseState extends State<ButtonCourse> {
           ..createSync(recursive: true)
           ..writeAsBytesSync(data);
       } else {
-        Directory(path + filename)
-          ..create(recursive: true);
+        Directory(path + filename)..create(recursive: true);
       }
     }
     _buildPathName(path);
     changeState(StatusButtonCourse.PARSE_COURSE);
   }
 
-  void _buildPathName(String path){
-
+  void _buildPathName(String path) {
     zipUrl = "file://" + path + "content/index.html";
-
   }
 }

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 class FileHelpers {
-  static const String _filename = "archive.zip";
+  static const String filenameArchive = "archive.zip";
   static const String _pathCourse = "Courses";
   static const String _folderUnzipCourse = "content";
   static const String _indexCoursePage = "index.html";
@@ -43,18 +43,19 @@ class FileHelpers {
   static Future<bool> checkArchive(int idCourse) async {
     String _localArchive = (await getDirectoryPathIdCourse(idCourse)) +
         Platform.pathSeparator +
-        _filename;
+        filenameArchive;
     final archiveFile = File(_localArchive);
     bool hasExisted = await archiveFile.exists();
     return hasExisted;
   }
 
-  static Future<String> checkFolderOrCreate(int idCourse) async {
+  static Future<String> checkCourseFolderOrCreate(int idCourse) async {
     String _localFolder = (await getDirectoryPathIdCourse(idCourse));
     final savedDir = Directory(_localFolder);
     bool hasExisted = await savedDir.exists();
     if (!hasExisted) {
-      savedDir.create();
+      print("no file");
+      await savedDir.create(recursive: true);
     }
     return _localFolder;
   }

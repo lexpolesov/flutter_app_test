@@ -2,16 +2,12 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutterapptest/parse_articulate/common/file_helpers.dart';
 
 class DownloadCourse {
   final String urlDownload;
   final Function(String, DownloadTaskStatus, int) onChangeDownload;
-
-  static const String _filename = "archive.zip";
-  static const String _pathCourse = "Courses";
 
   final int idCourse;
 
@@ -24,13 +20,14 @@ class DownloadCourse {
   Future<void> startDownload() async {
     await _prepare();
     _bindBackgroundIsolate();
+    print("_localPath " + _localPath);
 
     FlutterDownloader.registerCallback(downloadCallback);
 
     taskId = await FlutterDownloader.enqueue(
       url: urlDownload,
       savedDir: _localPath,
-      fileName: _filename,
+      fileName: FileHelpers.filenameArchive,
       showNotification: false,
       // show download progress in status bar (for Android)
       openFileFromNotification:
@@ -39,27 +36,7 @@ class DownloadCourse {
   }
 
   Future<Null> _prepare() async {
-    String idPath = idCourse.toString();
-    _localPath = (await _findLocalPath()) +
-        Platform.pathSeparator +
-        _pathCourse +
-        Platform.pathSeparator +
-        idPath;
-
-    final savedDir = Directory(_localPath);
-
-    bool hasExisted = await savedDir.exists();
-
-    if (!hasExisted) {
-      savedDir.create();
-    }
-  }
-
-  Future<String> _findLocalPath() async {
-    final directory = Platform.isAndroid
-        ? await getExternalStorageDirectory()
-        : await getApplicationDocumentsDirectory();
-    return directory.path;
+    _localPath = await FileHelpers.checkCourseFolderOrCreate(idCourse);
   }
 
   void _bindBackgroundIsolate() {
@@ -97,7 +74,7 @@ class DownloadCourse {
   }
 
   String getFileName() {
-    return _localPath + Platform.pathSeparator + _filename;
+    return _localPath + Platform.pathSeparator + FileHelpers.filenameArchive;
   }
 
   String getPath() {
