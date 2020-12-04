@@ -76,12 +76,22 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("InAppWebView")),
-      body: Container(
-          height: 60,
-          width: MediaQuery.of(context).size.width * 0.7,
-          child: urlLoaded
-              ? ButtonCourse(url, urlDownload, 55, isOffline: true, )
-              : CircularProgressIndicator()),
+      body: Column(
+        children: [
+          Container(
+              height: 60,
+              width: MediaQuery.of(context).size.width * 0.7,
+              child: urlLoaded
+                  ? ButtonCourse(CourseSettings(url: urlDownload, idCourse: 55))
+                  : CircularProgressIndicator()),
+          Container(
+              height: 60,
+              width: MediaQuery.of(context).size.width * 0.7,
+              child: urlLoaded
+                  ? ButtonCourse(CourseSettings(url: urlDownload, idCourse: 66))
+                  : CircularProgressIndicator()),
+        ],
+      ),
       /*Container(
             child: Column(children: <Widget>[
 

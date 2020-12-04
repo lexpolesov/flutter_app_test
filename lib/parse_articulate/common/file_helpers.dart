@@ -29,28 +29,54 @@ class FileHelpers {
     return _localPathId;
   }
 
-  static Future<bool> checkUnzipCourseIndexPage(int idCourse) async {
-    String _localPathIndexPage = (await getDirectoryPathIdCourse(idCourse)) +
+  static Future<String> getDirectoryPathIdCourseVersion(
+      int idCourse, int version) async {
+    String idPath = idCourse.toString();
+    String idVersion = version.toString();
+    String _localPathId = (await getDirectoryPathCourses()) +
         Platform.pathSeparator +
-        _folderUnzipCourse +
+        idPath +
         Platform.pathSeparator +
-        _indexCoursePage;
+        idVersion;
+    return _localPathId;
+  }
+
+  static Future<String> getDirectoryPathIdCourseVersionArchive(
+      int idCourse, int version) async {
+    String _localArchive =
+        (await getDirectoryPathIdCourseVersion(idCourse, version)) +
+            Platform.pathSeparator +
+            filenameArchive;
+    return _localArchive;
+  }
+
+  static Future<bool> checkUnzipCourseIndexPage(
+      int idCourse, int version) async {
+    String _localPathIndexPage =
+        (await getDirectoryPathIdCourseVersion(idCourse, version)) +
+            Platform.pathSeparator +
+            _folderUnzipCourse +
+            Platform.pathSeparator +
+            _indexCoursePage;
     final indexFile = File(_localPathIndexPage);
     bool hasExisted = await indexFile.exists();
     return hasExisted;
   }
 
-  static Future<bool> checkArchive(int idCourse) async {
-    String _localArchive = (await getDirectoryPathIdCourse(idCourse)) +
-        Platform.pathSeparator +
-        filenameArchive;
+  static Future<bool> checkArchive(int idCourse, int version) async {
+    String _localArchive =
+        (await getDirectoryPathIdCourseVersion(idCourse, version)) +
+            Platform.pathSeparator +
+            filenameArchive;
     final archiveFile = File(_localArchive);
     bool hasExisted = await archiveFile.exists();
     return hasExisted;
   }
 
-  static Future<String> checkCourseFolderOrCreate(int idCourse) async {
-    String _localFolder = (await getDirectoryPathIdCourse(idCourse));
+  static Future<String> checkCourseFolderOrCreate(
+      int idCourse, int version) async {
+    String _localFolder =
+        (await getDirectoryPathIdCourseVersion(idCourse, version));
     final savedDir = Directory(_localFolder);
     bool hasExisted = await savedDir.exists();
     if (!hasExisted) {
@@ -58,5 +84,17 @@ class FileHelpers {
       await savedDir.create(recursive: true);
     }
     return _localFolder;
+  }
+
+  static Future<bool> deletePathCourse(int idCourse) async {
+    String _localFolder = (await getDirectoryPathIdCourse(idCourse));
+    final deleteDir = Directory(_localFolder);
+    bool hasExisted = await deleteDir.exists();
+    if (!hasExisted) {
+      print("no file delete");
+      await deleteDir.delete(recursive: true);
+      return true;
+    }
+    return false;
   }
 }

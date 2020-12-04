@@ -21,6 +21,7 @@ enum StatusParseUnzippingStatus {
 }
 
 enum StatusButtonCourse {
+  CHECK, // проверяем статус
   LINK, // получили ссылку
   DOWNLOAD, //начали скачивание
   DOWNLOAD_ERROR, //ошибка скачивания

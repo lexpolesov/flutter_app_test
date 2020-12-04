@@ -5,54 +5,69 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutterapptest/parse_articulate/articulate_webview/articulate_webview.dart';
+import 'package:flutterapptest/parse_articulate/common/file_helpers.dart';
 
 import 'button_course_body.dart';
-import 'download/download_course.dart';
+import 'download/download_course_helper.dart';
 import 'parse_unzipping_course/common.dart';
 import 'parse_unzipping_course/parse_find_question_view.dart';
 
-class ButtonCourse extends StatefulWidget {
+class CourseSettings {
   final String url;
-  final String urlArchive;
+  final int version;
   final bool isOffline;
   final int idCourse;
+  StatusButtonCourse status;
 
-  const ButtonCourse(this.url, this.urlArchive, this.idCourse,
-      {this.isOffline = true});
+  CourseSettings(
+      {this.url, this.isOffline = true, this.idCourse, this.version = 1, this.status = StatusButtonCourse.CHECK});
+
+  void changeStatus(StatusButtonCourse newStatus){
+    status = newStatus;
+  }
+}
+
+class ButtonCourse extends StatefulWidget {
+  final CourseSettings settings;
+
+  const ButtonCourse(this.settings);
 
   @override
   State<StatefulWidget> createState() => _ButtonCourseState();
 }
 
 class _ButtonCourseState extends State<ButtonCourse> {
-  StatusButtonCourse status;
+ // StatusButtonCourse status;
 
-  DownloadCourse assistantDownloadCourse;
+  CourseSettings get settings => widget.settings;
+
+ // DownloadCourse assistantDownloadCourse;
 
   String zipUrl;
+
+  int percent = 0;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isOffline) {
+    if (widget.settings.isOffline) {
       //todo debug
-      status = StatusButtonCourse.LINK;
+     // settings.changeStatus(newStatus) = StatusButtonCourse.LINK;
       // status = StatusButtonCourse.READY;
-      assistantDownloadCourse = DownloadCourse(
-          widget.urlArchive, onChangeDownload,
-          idCourse: widget.idCourse);
+   //   assistantDownloadCourse = DownloadCourse(
+   //       widget.urlArchive, onChangeDownload,
+    //      idCourse: widget.idCourse);
     } else {
-      status = StatusButtonCourse.PARSE_COURSE;
+      widget.settings.changeStatus(StatusButtonCourse.PARSE_COURSE);
       startParseQuestionCount();
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    if (assistantDownloadCourse != null)
-      assistantDownloadCourse.unbindBackgroundIsolate();
-  }
+ /* void checkCourseStatus(){
+    if(widget.settings.)
+  }*/
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +76,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
       color: Colors.green,
       child: Stack(
         children: [
-          if (status == StatusButtonCourse.PARSE_COURSE)
+          if (settings.status == StatusButtonCourse.PARSE_COURSE)
             ParseFindQuestionView(
                 url: zipUrl, onFinishedParse: resultParseCourse),
           GestureDetector(
@@ -69,7 +84,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
               onTap: () {
                 changeStatusClick();
               },
-              child: ButtonCourseBody(status)),
+              child: ButtonCourseBody(settings.status, percent)),
         ],
       ),
     );
@@ -79,7 +94,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
     print("changeStatusClick ");
     StatusButtonCourse newStatus;
 
-    switch (status) {
+    switch (settings.status) {
       case StatusButtonCourse.LINK:
         newStatus = StatusButtonCourse.DOWNLOAD;
         break;
@@ -98,28 +113,31 @@ class _ButtonCourseState extends State<ButtonCourse> {
       case StatusButtonCourse.READY:
         openWebView();
         break;
+      case StatusButtonCourse.CHECK:
+        newStatus = StatusButtonCourse.DOWNLOAD;
+        break;
     }
     changeState(newStatus);
   }
 
   void changeState(StatusButtonCourse newStatus) {
-    if ((newStatus != null) && (newStatus != status)) {
+    if ((newStatus != null) && (newStatus != settings.status)) {
       setState(() {
-        status = newStatus;
-        if (status == StatusButtonCourse.DOWNLOAD) {
+        settings.changeStatus(newStatus);
+        if (settings.status == StatusButtonCourse.DOWNLOAD) {
           startDownLoad();
         }
-        if (status == StatusButtonCourse.UNZIP) {
+        if (settings.status == StatusButtonCourse.UNZIP) {
           startUnzip();
         }
-        print("changeState " + status.toString());
+        print("changeState " + settings.status.toString());
       });
     }
   }
 
   Future<void> startDownLoad() async {
     print("startDownLoad");
-    assistantDownloadCourse.startDownload();
+    await DownloadCourseHelper().startDownload(widget.settings.url, widget.settings.idCourse, widget.settings.version, onChangeDownload);
     // Future.delayed(Duration(seconds: 1)).then((value) {
     //    changeState(StatusButtonCourse.UNZIP);
     // });
@@ -127,9 +145,12 @@ class _ButtonCourseState extends State<ButtonCourse> {
 
   Future<void> startUnzip() async {
     print("startUnzip");
-    Future.delayed(Duration(seconds: 1)).then((value) {
+    String urlArchive = await FileHelpers.getDirectoryPathIdCourseVersionArchive(widget.settings.idCourse, widget.settings.version);
+    String urlPath = await FileHelpers.getDirectoryPathIdCourseVersion(widget.settings.idCourse, widget.settings.version);
+    unZip(urlArchive, urlPath);
+   // Future.delayed(Duration(seconds: 1)).then((value) {
       //  changeState(StatusButtonCourse.PARSE_COURSE);
-    });
+  //  });
   }
 
   Future<void> startParseQuestionCount() async {
@@ -169,11 +190,13 @@ class _ButtonCourseState extends State<ButtonCourse> {
 
   void onChangeDownload(String id, DownloadTaskStatus status, int progress) {
     switch (status.value) {
+      case 2:
+        setState(() {
+          percent = progress;
+        });
+        break;
       case 3:
         changeState(StatusButtonCourse.UNZIP);
-        unZip(assistantDownloadCourse.getFileName(),
-            assistantDownloadCourse.getPath());
-        print("filename " + assistantDownloadCourse.getFileName());
         break;
       case 4:
         changeState(StatusButtonCourse.DOWNLOAD_ERROR);
@@ -182,9 +205,9 @@ class _ButtonCourseState extends State<ButtonCourse> {
     }
   }
 
-  void unZip(String filename, String path) {
+  void unZip(String pathArchive, String path) {
     // Read the Zip file from disk.
-    final bytes = File(filename).readAsBytesSync();
+    final bytes = File(pathArchive).readAsBytesSync();
 
     // Decode the Zip file
     final archive = ZipDecoder().decodeBytes(bytes);

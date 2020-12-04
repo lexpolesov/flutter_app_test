@@ -5,8 +5,9 @@ import 'parse_unzipping_course/common.dart';
 
 class ButtonCourseBody extends StatelessWidget {
   final StatusButtonCourse _status;
+  final int percent;
 
-  ButtonCourseBody(this._status);
+  ButtonCourseBody(this._status, this.percent);
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +25,10 @@ class ButtonCourseBody extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 16.0),
             child: Text("Скачивание..."),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0),
+            child: Text(percent.toString() ?? ""),
           )
         ]);
         break;
@@ -53,6 +58,9 @@ class ButtonCourseBody extends StatelessWidget {
         break;
       case StatusButtonCourse.READY:
         return Text("Открыть");
+        break;
+      case StatusButtonCourse.CHECK:
+        return CircularProgressIndicator();
         break;
     }
     return Container();
