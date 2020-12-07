@@ -100,6 +100,11 @@ class ParseFindQuestionCount {
       }
 
       loadNextQuiz();
+    } else {
+      statusLoad = StatusParseUnzippingStatus.finishParseQuiz;
+      onFinishedParse(_quizUrls);
+      _controller.stopLoading();
+      _controller.clearCache();
     }
   }
 
@@ -109,12 +114,6 @@ class ParseFindQuestionCount {
 
     var searchStartButton = documentHtml.getElementsByClassName(_classButton);
     if (searchStartButton.isNotEmpty) {
-    /*  statusLoad = StatusParseUnzippingStatus.clickStartQuiz;
-      String clickButton = """
-      document.getElementsByClassName("quiz-header__start-quiz brand--color").click = function(){ console.log("click button");};
-      document.getElementsByClassName("quiz-header__start-quiz brand--color").click();""";
-      _controller.evaluateJavascript(source: clickButton);
-*/
       var searchQuestionCounter =
           documentHtml.getElementsByClassName(_classCounterLabel);
       if (searchQuestionCounter.isNotEmpty) {
