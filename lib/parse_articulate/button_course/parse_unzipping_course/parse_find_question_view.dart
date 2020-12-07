@@ -6,11 +6,10 @@ import 'parse_find_question_count.dart';
 
 class ParseFindQuestionView extends StatefulWidget {
   final String url;
-  final bool isOffline;
   final Function(List<CourseCountQuestion>) onFinishedParse;
 
   const ParseFindQuestionView(
-      {this.url = "", this.isOffline = true, this.onFinishedParse});
+      {this.url = "", this.onFinishedParse});
 
   @override
   State<StatefulWidget> createState() => _ParseFindQuestionViewState();

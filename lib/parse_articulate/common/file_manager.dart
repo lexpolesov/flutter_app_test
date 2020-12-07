@@ -7,6 +7,7 @@ class FileManager {
   static const String _pathCourse = "Courses";
   static const String _folderUnzipCourse = "content";
   static const String _indexCoursePage = "index.html";
+  static const String prefixLocalCourse = "file://";
 
   static Future<String> getDirectoryApplication() async {
     final directory = Platform.isAndroid
@@ -94,5 +95,9 @@ class FileManager {
       return true;
     }
     return false;
+  }
+
+  static String postfixLocalArchive() {
+    return _folderUnzipCourse + Platform.pathSeparator + _indexCoursePage;
   }
 }

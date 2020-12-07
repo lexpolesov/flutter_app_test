@@ -19,8 +19,7 @@ class CourseSettings {
   final int idCourse;
   StatusButtonCourse status;
   CourseAnalysis analysis;
-  String taskId =
-      "ru.polesov.flutterapptest.download.background.1607095818.304401.1";
+  String taskId;
 
   CourseSettings(
       {this.url,
@@ -64,31 +63,16 @@ class ButtonCourse extends StatefulWidget {
 }
 
 class _ButtonCourseState extends State<ButtonCourse> {
-  // StatusButtonCourse status;
-
   CourseSettings get settings => widget.settings;
 
-  // DownloadCourse assistantDownloadCourse;
+  int _percent = 0;
 
-  String zipUrl;
-
-  int percent = 0;
+  String _linkUnzipForOpen = "";
 
   @override
   void initState() {
     super.initState();
-    if (widget.settings.isOffline) {
-      startCheckCourse();
-      //todo debug
-      // settings.changeStatus(newStatus) = StatusButtonCourse.LINK;
-      // status = StatusButtonCourse.READY;
-      //   assistantDownloadCourse = DownloadCourse(
-      //       widget.urlArchive, onChangeDownload,
-      //      idCourse: widget.idCourse);
-    } else {
-      widget.settings.changeStatus(StatusButtonCourse.PARSE_COURSE);
-      startParseQuestionCount();
-    }
+    startCheckCourse();
   }
 
   @override
@@ -100,13 +84,13 @@ class _ButtonCourseState extends State<ButtonCourse> {
         children: [
           if (settings.status == StatusButtonCourse.PARSE_COURSE)
             ParseFindQuestionView(
-                url: zipUrl, onFinishedParse: resultParseCourse),
+                url: _buildPathName(), onFinishedParse: resultParseCourse),
           GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: () {
                 changeStatusClick();
               },
-              child: ButtonCourseBody(settings.status, percent)),
+              child: ButtonCourseBody(settings.status, _percent)),
         ],
       ),
     );
@@ -225,7 +209,6 @@ class _ButtonCourseState extends State<ButtonCourse> {
     return checkStatus;
   }
 
-
   //StatusButtonCourse.DOWNLOAD
   //загрузка файла
   Future<void> startDownLoad() async {
@@ -242,7 +225,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
     switch (status.value) {
       case 2: //процесс скачивания, получаем процент и передаем в кнопку
         setState(() {
-          percent = progress;
+          _percent = progress;
         });
         break;
       case 3: //успешное скачивание
@@ -254,7 +237,6 @@ class _ButtonCourseState extends State<ButtonCourse> {
     }
   }
 
-
   //StatusButtonCourse.DOWNLOADING
   //привязать callback на изменения по скачиванию
   void addCallbackDownloading() {
@@ -263,7 +245,6 @@ class _ButtonCourseState extends State<ButtonCourse> {
           .addCallbackTaskId(settings.taskId, onChangeDownload);
     }
   }
-
 
   //StatusButtonCourse.UNZIP
   //распаковка курса
@@ -296,20 +277,12 @@ class _ButtonCourseState extends State<ButtonCourse> {
         Directory(path + filename)..create(recursive: true);
       }
     }
-    _buildPathName(path);
+    _linkUnzipForOpen = path;
     changeState(StatusButtonCourse.PARSE_COURSE);
   }
 
-
   //StatusButtonCourse.PARSE_COURSE
   //старт анализа курса перед открытием
-  Future<void> startParseQuestionCount() async {
-    print("startParseQuestionCount");
-    Future.delayed(Duration(seconds: 1)).then((value) {
-      changeState(StatusButtonCourse.READY);
-    });
-  }
-
   //результат анализа
   void resultParseCourse(List<CourseCountQuestion> resultQuizList) {
     settings.analysis = (resultQuizList != null)
@@ -334,20 +307,24 @@ class _ButtonCourseState extends State<ButtonCourse> {
     print("Всего вопросов " + countQuestion.toString());
   }
 
-
   //StatusButtonCourse.READY
   //открытие крса
   void openWebView() {
     print("openWebView");
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ArticulateWebView(zipUrl)),
+      MaterialPageRoute(
+          builder: (context) => ArticulateWebView(_buildPathName())),
     );
   }
 
-
-
-  void _buildPathName(String path) {
-    zipUrl = "file://" + path + "content/index.html";
+  String _buildPathName() {
+    if (settings.isOffline) {
+      return FileManager.prefixLocalCourse +
+          _linkUnzipForOpen +
+          FileManager.postfixLocalArchive();
+    } else {
+      return settings.url;
+    }
   }
 }
