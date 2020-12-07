@@ -5,21 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:flutterapptest/old/button_download.dart';
-import 'package:flutterapptest/old/parse_articulate_widget.dart';
-import 'package:html/parser.dart';
+import 'package:flutterapptest/parse_articulate/button_course/button_course.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:html/parser.dart' show parse;
-
-import 'parse_articulate/button_course/button_course.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterDownloader.initialize(
       debug: true // optional: set false to disable printing logs to console
-  );
+      );
 
   // await Permission.camera.request();
   // await Permission.microphone.request();
@@ -52,28 +47,34 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   bool urlLoaded = false;
   String url = "";
-  String urlDownload = "https://pfizer-revmo-backend.madbrains.ru/storage/files/i5Jw6CdWY4fRIflknegRv6hYWLso0ftBiGpwcWRR.zip";//"https://www.7-zip.org/a/7za920.zip";//"https://static.tildacdn.com/tild3537-6439-4438-a566-333966303539/logo.svg";
+  String urlDownload =
+      "https://pfizer-revmo-backend.madbrains.ru/storage/files/i5Jw6CdWY4fRIflknegRv6hYWLso0ftBiGpwcWRR.zip"; //"https://www.7-zip.org/a/7za920.zip";//"https://static.tildacdn.com/tild3537-6439-4438-a566-333966303539/logo.svg";
+  String urlOnline =
+      "https://rise.articulate.com/share/Mfaov9k8XJmsctKWhoZd17ndWZC4Md6u";
+  CourseSettings setting1;
+  CourseSettings setting2;
 
   @override
   void initState() {
     super.initState();
+    setting1 = CourseSettings(url: urlDownload, idCourse: 55);
+    setting2 = CourseSettings(url: urlOnline, idCourse: 66, isOffline: false);
     //  _webViewController.future.then((controller) {
     //  _loadHtmlFromSD(_webViewController);
     // _loadHtmlOnline(controller);
     // _loadHtmlFromAssets(controller);
     //  });
-    getUrl().then((value) {
-      setState(() {
-        urlLoaded = true;
-        url = value;
-      });
-    });
+    // getUrl().then((value) {
+    //   setState(() {
+    //    urlLoaded = true;
+    //    url = value;
+    //   });
+    //  });
   }
-
-
 
   @override
   Widget build(BuildContext context) {
+    print("build main");
     return Scaffold(
       appBar: AppBar(title: Text("InAppWebView")),
       body: Column(
@@ -81,15 +82,14 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
           Container(
               height: 60,
               width: MediaQuery.of(context).size.width * 0.7,
-              child: urlLoaded
-                  ? ButtonCourse(CourseSettings(url: urlDownload, idCourse: 55))
-                  : CircularProgressIndicator()),
+              child: //urlLoaded
+                  //  ?
+                  ButtonCourse(setting1)),
+          // : CircularProgressIndicator()),
           Container(
               height: 60,
               width: MediaQuery.of(context).size.width * 0.7,
-              child: urlLoaded
-                  ? ButtonCourse(CourseSettings(url: urlDownload, idCourse: 66))
-                  : CircularProgressIndicator()),
+              child: ButtonCourse(setting2)),
         ],
       ),
       /*Container(
@@ -288,7 +288,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
     if (Platform.isAndroid) {
       //sdPath = "file:///sdcard/Download/course_tincat/index.html";
-    //  sdPath = "file:///sdcard/Download/content_test_all/index.html";
+      //  sdPath = "file:///sdcard/Download/content_test_all/index.html";
 
       sdPath = "file:///sdcard/Download/content_etalon/index.html";
     }

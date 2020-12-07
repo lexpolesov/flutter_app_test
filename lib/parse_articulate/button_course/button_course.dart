@@ -5,7 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutterapptest/parse_articulate/articulate_webview/articulate_webview.dart';
-import 'package:flutterapptest/parse_articulate/common/file_manager.dart';
+import 'package:flutterapptest/parse_articulate/common/file_assistant.dart';
+import 'package:flutterapptest/parse_articulate/common/unzip_assistant.dart';
 
 import 'button_course_body.dart';
 import 'download/download_course_helper.dart';
@@ -30,6 +31,7 @@ class CourseSettings {
 
   void changeStatus(StatusButtonCourse newStatus) {
     status = newStatus;
+    print("status " + status.toString());
   }
 }
 
@@ -65,7 +67,7 @@ class ButtonCourse extends StatefulWidget {
 class _ButtonCourseState extends State<ButtonCourse> {
   CourseSettings get settings => widget.settings;
 
-  int _percent = 0;
+  int _percentDownload = 0;
 
   String _linkUnzipForOpen = "";
 
@@ -77,6 +79,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
 
   @override
   Widget build(BuildContext context) {
+    print("build " + settings.status.toString());
     return Container(
       height: 60,
       color: Colors.green,
@@ -90,7 +93,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
               onTap: () {
                 changeStatusClick();
               },
-              child: ButtonCourseBody(settings.status, _percent)),
+              child: ButtonCourseBody(settings.status, _percentDownload)),
         ],
       ),
     );
@@ -131,7 +134,6 @@ class _ButtonCourseState extends State<ButtonCourse> {
     if ((newStatus != null) && (newStatus != settings.status)) {
       setState(() {
         settings.changeStatus(newStatus);
-        if (settings.status == StatusButtonCourse.CHECK) {}
         if (settings.status == StatusButtonCourse.DOWNLOAD) {
           startDownLoad();
         }
@@ -153,13 +155,13 @@ class _ButtonCourseState extends State<ButtonCourse> {
     if (settings.isOffline) {
       checkStatus = await analysisOfflineStateCourse();
     } else {
-      checkStatus = await analysisOnlineStateCourse();
+      checkStatus = analysisOnlineStateCourse();
     }
     changeState(checkStatus);
   }
 
-  //анализ курса онлайн
-  Future<StatusButtonCourse> analysisOnlineStateCourse() async {
+  //анализ статуса курса онлайн
+  StatusButtonCourse analysisOnlineStateCourse() {
     if (settings.analysis == null) {
       return StatusButtonCourse.PARSE_COURSE;
     }
@@ -169,8 +171,9 @@ class _ButtonCourseState extends State<ButtonCourse> {
   //анализ курса оффлайн
   Future<StatusButtonCourse> analysisOfflineStateCourse() async {
     StatusButtonCourse checkStatus = StatusButtonCourse.LINK;
+    print("analysisOfflineStateCourse");
     //проверяем есть ли распакованный файл
-    bool checkCourseIndexPage = await FileManager.checkUnzipCourseIndexPage(
+    bool checkCourseIndexPage = await FileAssistant.checkUnzipCourseIndexPage(
         settings.idCourse, settings.version);
     if (checkCourseIndexPage) {
       //если распакованный архив есть, проверяем анализ курса
@@ -179,6 +182,11 @@ class _ButtonCourseState extends State<ButtonCourse> {
         return StatusButtonCourse.READY;
       } else {
         //если анализа нет = статус провести анализ
+        if (_linkUnzipForOpen == "")
+          _linkUnzipForOpen =
+              (await FileAssistant.getDirectoryPathIdCourseVersion(
+                      widget.settings.idCourse, widget.settings.version)) +
+                  Platform.pathSeparator;
         return StatusButtonCourse.PARSE_COURSE;
       }
     }
@@ -192,7 +200,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
             .where((element) => element.status == DownloadTaskStatus.complete);
         if ((goodResult != null) && (goodResult.length > 0)) {
           //если нашли задачу с успешной загрузкой то проверяем наличие архива
-          bool checkArchiveDownload = await FileManager.checkArchive(
+          bool checkArchiveDownload = await FileAssistant.checkArchive(
               settings.idCourse, settings.version);
           if (checkArchiveDownload) {
             return StatusButtonCourse.UNZIP;
@@ -206,6 +214,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
         }
       }
     }
+    print("analysisOfflineStateCourse exit " + checkStatus.toString());
     return checkStatus;
   }
 
@@ -217,7 +226,11 @@ class _ButtonCourseState extends State<ButtonCourse> {
         widget.settings.idCourse,
         widget.settings.version,
         onChangeDownload);
-    settings.taskId = taskId;
+    if (taskId == null) {
+      changeState(StatusButtonCourse.DOWNLOAD_ERROR);
+    } else {
+      settings.taskId = taskId;
+    }
   }
 
   //Callback скачивания файла
@@ -225,13 +238,15 @@ class _ButtonCourseState extends State<ButtonCourse> {
     switch (status.value) {
       case 2: //процесс скачивания, получаем процент и передаем в кнопку
         setState(() {
-          _percent = progress;
+          _percentDownload = progress;
         });
         break;
       case 3: //успешное скачивание
+        _percentDownload = 0;
         changeState(StatusButtonCourse.UNZIP);
         break;
       case 4: //ошибка загрузки
+        _percentDownload = 0;
         changeState(StatusButtonCourse.DOWNLOAD_ERROR);
         break;
     }
@@ -250,13 +265,26 @@ class _ButtonCourseState extends State<ButtonCourse> {
   //распаковка курса
   Future<void> startUnzip() async {
     String urlArchive =
-        await FileManager.getDirectoryPathIdCourseVersionArchive(
+        await FileAssistant.getDirectoryPathIdCourseVersionArchive(
             widget.settings.idCourse, widget.settings.version);
-    String urlPath = await FileManager.getDirectoryPathIdCourseVersion(
-        widget.settings.idCourse, widget.settings.version);
-    unZip(urlArchive, urlPath);
+    String urlPath = (await FileAssistant.getDirectoryPathIdCourseVersion(
+            widget.settings.idCourse, widget.settings.version)) +
+        Platform.pathSeparator;
+    // unZip(urlArchive, urlPath);
+
+    UnzipAssistant(
+        pathArchive: urlArchive,
+        path: urlPath,
+        onComplete: () {
+          _linkUnzipForOpen = urlPath;
+          changeState(StatusButtonCourse.PARSE_COURSE);
+        },
+        onError: () {
+          changeState(StatusButtonCourse.UNZIP_ERROR);
+        });
   }
 
+/*
   //todo
   void unZip(String pathArchive, String path) {
     // Read the Zip file from disk.
@@ -279,7 +307,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
     }
     _linkUnzipForOpen = path;
     changeState(StatusButtonCourse.PARSE_COURSE);
-  }
+  }*/
 
   //StatusButtonCourse.PARSE_COURSE
   //старт анализа курса перед открытием
@@ -320,9 +348,9 @@ class _ButtonCourseState extends State<ButtonCourse> {
 
   String _buildPathName() {
     if (settings.isOffline) {
-      return FileManager.prefixLocalCourse +
+      return FileAssistant.prefixLocalCourse +
           _linkUnzipForOpen +
-          FileManager.postfixLocalArchive();
+          FileAssistant.postfixLocalArchive();
     } else {
       return settings.url;
     }

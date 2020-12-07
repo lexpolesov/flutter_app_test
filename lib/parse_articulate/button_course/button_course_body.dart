@@ -20,6 +20,7 @@ class ButtonCourseBody extends StatelessWidget {
         return Text("Скачать");
         break;
       case StatusButtonCourse.DOWNLOAD:
+      case StatusButtonCourse.DOWNLOADING:
         return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           CircularProgressIndicator(),
           Padding(

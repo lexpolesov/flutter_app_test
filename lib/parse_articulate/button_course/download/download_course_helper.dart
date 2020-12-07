@@ -3,7 +3,8 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutterapptest/parse_articulate/common/file_manager.dart';
+import 'package:flutterapptest/parse_articulate/common/file_assistant.dart';
+import 'package:flutterapptest/parse_articulate/common/permissions.dart';
 
 class DownloadCourseCallback {
   final String idTasks;
@@ -29,17 +30,21 @@ class DownloadCourseManager {
   Future<String> startDownload(String urlDownload, int idCourse, int idVersion,
       Function(String, DownloadTaskStatus, int) onChangeDownload) async {
     String _localPath =
-        await FileManager.checkCourseFolderOrCreate(idCourse, idVersion);
+        await FileAssistant.checkCourseFolderOrCreate(idCourse, idVersion);
+     bool isGrantedPermissions = await Permissions.requestPermissionStorage();
 
-    String taskId = await FlutterDownloader.enqueue(
-      url: urlDownload,
-      savedDir: _localPath,
-      fileName: FileManager.filenameArchive,
-      showNotification: false,
-      openFileFromNotification: false,
-    );
-    _callbacks.add(DownloadCourseCallback(taskId, onChangeDownload));
-    return taskId;
+     if(isGrantedPermissions) {
+       String taskId = await FlutterDownloader.enqueue(
+         url: urlDownload,
+         savedDir: _localPath,
+         fileName: FileAssistant.filenameArchive,
+         showNotification: false,
+         openFileFromNotification: false,
+       );
+       _callbacks.add(DownloadCourseCallback(taskId, onChangeDownload));
+       return taskId;
+     }
+     return null;
   }
 
   void addCallbackTaskId(String taskId,

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-class FileManager {
+class FileAssistant {
   static const String filenameArchive = "archive.zip";
   static const String _pathCourse = "Courses";
   static const String _folderUnzipCourse = "content";
