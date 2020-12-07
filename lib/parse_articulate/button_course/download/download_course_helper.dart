@@ -3,7 +3,7 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:flutter_downloader/flutter_downloader.dart';
-import 'package:flutterapptest/parse_articulate/common/file_helpers.dart';
+import 'package:flutterapptest/parse_articulate/common/file_manager.dart';
 
 class DownloadCourseCallback {
   final String idTasks;
@@ -12,39 +12,39 @@ class DownloadCourseCallback {
   DownloadCourseCallback(this.idTasks, this.onChangeDownload);
 }
 
-class DownloadCourseHelper {
+class DownloadCourseManager {
+  List<DownloadCourseCallback> _callbacks = [];
 
-  List<DownloadCourseCallback> callbacks = [];
+  static final DownloadCourseManager _singleton =
+      DownloadCourseManager._internal();
 
-  static final DownloadCourseHelper _singleton =
-      DownloadCourseHelper._internal();
-
-  factory DownloadCourseHelper() {
+  factory DownloadCourseManager() {
     return _singleton;
   }
 
-  DownloadCourseHelper._internal() {
+  DownloadCourseManager._internal() {
     _bindBackgroundIsolate();
   }
 
   Future<String> startDownload(String urlDownload, int idCourse, int idVersion,
       Function(String, DownloadTaskStatus, int) onChangeDownload) async {
     String _localPath =
-        await FileHelpers.checkCourseFolderOrCreate(idCourse, idVersion);
-    //_bindBackgroundIsolate();
-    print("_localPath " + _localPath);
-
-   // FlutterDownloader.registerCallback(downloadCallback);
+        await FileManager.checkCourseFolderOrCreate(idCourse, idVersion);
 
     String taskId = await FlutterDownloader.enqueue(
       url: urlDownload,
       savedDir: _localPath,
-      fileName: FileHelpers.filenameArchive,
+      fileName: FileManager.filenameArchive,
       showNotification: false,
       openFileFromNotification: false,
     );
-    callbacks.add(DownloadCourseCallback(taskId, onChangeDownload));
+    _callbacks.add(DownloadCourseCallback(taskId, onChangeDownload));
     return taskId;
+  }
+
+  void addCallbackTaskId(String taskId,
+      Function(String, DownloadTaskStatus, int) onChangeDownload) {
+    _callbacks.add(DownloadCourseCallback(taskId, onChangeDownload));
   }
 
   void _bindBackgroundIsolate() {
@@ -62,8 +62,8 @@ class DownloadCourseHelper {
       int progress = data[2];
       //setState((){ });
 
-      if (callbacks != null) {
-        var searchTask = callbacks
+      if (_callbacks != null) {
+        var searchTask = _callbacks
             .firstWhere((element) => element.idTasks == id, orElse: () => null);
         if ((searchTask != null) && (searchTask.onChangeDownload != null))
           searchTask.onChangeDownload(id, status, progress);
@@ -77,7 +77,6 @@ class DownloadCourseHelper {
     final SendPort send =
         IsolateNameServer.lookupPortByName('downloader_send_port');
     send.send([id, status, progress]);
-    print("progress " + progress.toString());
   }
 
   void unbindBackgroundIsolate() {
@@ -86,5 +85,12 @@ class DownloadCourseHelper {
 
   void retryDownLoad(String taskId) {
     FlutterDownloader.retry(taskId: taskId);
+  }
+
+  Future<List<DownloadTask>> getStatusDownload(String taskId) async {
+    String query = "SELECT * FROM task WHERE task_id='$taskId'";
+    List<DownloadTask> tasks =
+        await FlutterDownloader.loadTasksWithRawQuery(query: query);
+    return tasks;
   }
 }

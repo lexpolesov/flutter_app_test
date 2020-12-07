@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
-class FileHelpers {
+class FileManager {
   static const String filenameArchive = "archive.zip";
   static const String _pathCourse = "Courses";
   static const String _folderUnzipCourse = "content";
@@ -80,7 +80,6 @@ class FileHelpers {
     final savedDir = Directory(_localFolder);
     bool hasExisted = await savedDir.exists();
     if (!hasExisted) {
-      print("no file");
       await savedDir.create(recursive: true);
     }
     return _localFolder;
@@ -91,7 +90,6 @@ class FileHelpers {
     final deleteDir = Directory(_localFolder);
     bool hasExisted = await deleteDir.exists();
     if (!hasExisted) {
-      print("no file delete");
       await deleteDir.delete(recursive: true);
       return true;
     }

@@ -24,6 +24,7 @@ enum StatusButtonCourse {
   CHECK, // проверяем статус
   LINK, // получили ссылку
   DOWNLOAD, //начали скачивание
+  DOWNLOADING,
   DOWNLOAD_ERROR, //ошибка скачивания
   UNZIP, //распаковка
   UNZIP_ERROR, //ошибка распаковки
