@@ -47,6 +47,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   bool urlLoaded = false;
   String url = "";
+
   //String urlDownload = "https://asna-web.s3.eu-central-1.amazonaws.com/lms/courses/logo/bCzSdX0GEeioGUVrnjRuhCoM3XpCyHkFylWxvggX.png?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAWCMCWYUESBTVQRT7%2F20201209%2Feu-central-1%2Fs3%2Faws4_request&X-Amz-Date=20201209T111433Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=664482bdfb468735739fb1986252c983837028714fc1653329dfa1d311915bac";
   String urlDownload =
       "https://pfizer-revmo-backend.madbrains.ru/storage/files/i5Jw6CdWY4fRIflknegRv6hYWLso0ftBiGpwcWRR.zip"; //"https://www.7-zip.org/a/7za920.zip";//"https://static.tildacdn.com/tild3537-6439-4438-a566-333966303539/logo.svg";
@@ -80,14 +81,14 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
       appBar: AppBar(title: Text("InAppWebView")),
       body: Column(
         children: [
-         Container(
+          Container(
               height: 60,
               width: MediaQuery.of(context).size.width * 0.7,
               child: //urlLoaded
                   //  ?
                   ButtonCourse(setting1)),
           // : CircularProgressIndicator()),
-         Container(
+          Container(
               height: 60,
               width: MediaQuery.of(context).size.width * 0.7,
               child: ButtonCourse(setting2)),
