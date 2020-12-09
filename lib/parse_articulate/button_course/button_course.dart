@@ -87,7 +87,7 @@ class _ButtonCourseState extends State<ButtonCourse> {
         children: [
           if (settings.status == StatusButtonCourse.PARSE_COURSE)
             ParseFindQuestionView(
-                url: _buildPathName(), onFinishedParse: resultParseCourse),
+                url: _buildPathName(), onFinishedParse: resultParseCourse, isOffline: settings.isOffline),
           GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: () {

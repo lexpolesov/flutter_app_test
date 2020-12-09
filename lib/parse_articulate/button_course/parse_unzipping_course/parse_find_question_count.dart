@@ -1,18 +1,21 @@
 import 'dart:io';
 
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutterapptest/parse_articulate/common/parse_webview.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
 
 import 'common.dart';
 
-class ParseFindQuestionCount {
+class AnalysisParseWebView extends ParseWebView {
+
+  final Function(List<CourseCountQuestion>) onFinishedParse;
+  final bool isOffline;
+
   List<CourseCountQuestion> _quizUrls;
-  InAppWebViewController _controller;
-  Function(List<CourseCountQuestion>) onFinishedParse;
   String _baseUrl = "";
-  StatusParseUnzippingStatus statusLoad =
-      StatusParseUnzippingStatus.searchIndex;
+  StatusBackgroundAnalysis statusLoad =
+      StatusBackgroundAnalysis.searchIndex;
   int currentQuiz = -1;
 
   final String _prefixUrl = "#/";
@@ -24,57 +27,112 @@ class ParseFindQuestionCount {
   final String _classCounterLabel = "quiz-card__counter brand--color brand--ui";
   final String _href = "href";
 
-  ParseFindQuestionCount({this.onFinishedParse}) {
+  static const String _consoleTagDomModelChanged = "DOM model changed";
+
+  AnalysisParseWebView({this.isOffline = true, this.onFinishedParse}) {
     print("UnZipPackageParse create");
     _quizUrls = [];
   }
 
-  void addController(InAppWebViewController controller) {
-    _controller = controller;
+  void addController(InAppWebViewController addController) {
+    controller = addController;
+    controller.getUrl().then((value) => _baseUrl = value);
+    print("add controller");
   }
 
-  void addUrl(String url) {
+  /* void addUrl(String url) {
     _baseUrl = url;
     _loadStartPage();
-  }
-
+  }*/
+/*
   void _loadStartPage() {
-    if (_controller != null) {
+    if (controller != null) {
       print("_baseUrl " + _baseUrl);
-      _controller.loadUrl(url: _baseUrl);
+      controller.loadUrl(url: _baseUrl);
     }
-  }
+  }*/
 
-  Future<void> pageLoadStop(String loadStopUrl) async {
+  Future<void> onLoadStop(String loadStopUrl) async {
     print("loadStopUrl " + loadStopUrl);
-    if (statusLoad == StatusParseUnzippingStatus.searchIndex) {
+    if(!isOffline) {
+      final String _mutationObserver =
+      """var observer = new MutationObserver(function(mutations) { 
+        console.log('$_consoleTagDomModelChanged');
+        });
+          observer.observe(document.documentElement, {
+              attributes: true,
+              characterData: true,
+              childList: true,
+              subtree: true,
+              attributeOldValue: true,
+              characterDataOldValue: true
+              }); 
+              """;
+      controller.evaluateJavascript(source: _mutationObserver);
+    }
+    if (statusLoad == StatusBackgroundAnalysis.searchIndex) {
       if (loadStopUrl == (_baseUrl + _prefixUrl)) {
         print("onLoadStop index page");
-        _controller.getHtml().then((value) {
-          parseStartPage(value);
-        });
+
+        if(isOffline){
+           controller.getHtml().then((value) {
+             _parseStartPage(value);
+           });
+        }else {
+          statusLoad = StatusBackgroundAnalysis.loadIndex;
+        }
+       // statusLoad = StatusBackgroundAnalysis.loadIndex;
+       // controller.getHtml().then((value) {
+       //   _parseStartPage(value);
+       // });
       }
     }
 
-    if (statusLoad == StatusParseUnzippingStatus.loadQuiz) {
+    if (statusLoad == StatusBackgroundAnalysis.searchQuiz) {
       if (currentQuiz < _quizUrls.length) {
         String urlQuiz = _quizUrls[currentQuiz].link;
         if (loadStopUrl == (_baseUrl + urlQuiz)) {
           print("onLoadStop quiz page");
-          _controller.getHtml().then((value) {
-            parseQuizPage(value);
-          });
+          if(isOffline){
+             controller.getHtml().then((value) {
+              _parseQuizPage(value);
+             });
+          }else {
+            statusLoad = StatusBackgroundAnalysis.loadQuiz;
+          }
+         // statusLoad = StatusBackgroundAnalysis.loadQuiz;
+         // controller.getHtml().then((value) {
+          //  _parseQuizPage(value);
+         // });
         }
       }
     }
   }
 
-  void parseStartPage(String htmlText) {
+  void onConsoleMessage(ConsoleMessage message) {
+    print(message);
+    switch (message.message) {
+      case _consoleTagDomModelChanged:
+        if (statusLoad == StatusBackgroundAnalysis.loadIndex) {
+          statusLoad = StatusBackgroundAnalysis.parseIndex;
+          controller.getHtml().then((value) => _parseStartPage(value));
+        }
+        if (statusLoad == StatusBackgroundAnalysis.loadQuiz) {
+          statusLoad = StatusBackgroundAnalysis.parseQuiz;
+          controller.getHtml().then((value) => _parseQuizPage(value));
+        }
+       // statusLoad = StatusBackgroundAnalysis.loadQuiz;
+        break;
+    }
+  }
+
+  // разбираем стартовую страницу
+  void _parseStartPage(String htmlText) {
     dom.Document documentHtml = parse(htmlText);
     var searchListItem = documentHtml.getElementsByClassName(_classListItem);
     print("count list " + searchListItem.length.toString());
     if (searchListItem.length != 0) {
-      statusLoad = StatusParseUnzippingStatus.foundIndex;
+      statusLoad = StatusBackgroundAnalysis.foundIndex;
       List<dom.Element> quizMenuElement = [];
       searchListItem.forEach((element) {
         var quizSearch = element
@@ -91,7 +149,7 @@ class ParseFindQuestionCount {
       currentQuiz = -1;
       if (quizMenuElement.isNotEmpty) {
         quizMenuElement.forEach((quizElement) {
-          String link = getLink(quizElement);
+          String link = _getLink(quizElement);
           if ((link != null) && (link != "")) {
             _quizUrls.add(CourseCountQuestion(link: link));
             print("Course link " + link);
@@ -99,24 +157,24 @@ class ParseFindQuestionCount {
         });
       }
 
-      loadNextQuiz();
+      _loadNextQuiz();
     } else {
-      statusLoad = StatusParseUnzippingStatus.finishParseQuiz;
-      onFinishedParse(_quizUrls);
-      _controller.stopLoading();
-      _controller.clearCache();
+      _finishedAnalysis();
     }
   }
 
-  void parseQuizPage(String htmlText) {
+  // разбираем страницу с вопросом
+  void _parseQuizPage(String htmlText) {
     print("parseQuizPage");
     dom.Document documentHtml = parse(htmlText);
 
     var searchStartButton = documentHtml.getElementsByClassName(_classButton);
     if (searchStartButton.isNotEmpty) {
+      print("searchStartButton");
       var searchQuestionCounter =
           documentHtml.getElementsByClassName(_classCounterLabel);
       if (searchQuestionCounter.isNotEmpty) {
+        print("searchQuestionCounter");
         String textQuestionCounter = searchQuestionCounter.first.text;
         int findIndexOf = textQuestionCounter.indexOf("/");
         if (findIndexOf != -1) {
@@ -129,29 +187,36 @@ class ParseFindQuestionCount {
         }
       }
     }
-    loadNextQuiz();
+    _loadNextQuiz();
   }
 
-  void loadNextQuiz() {
+  //загрузить следующий урок
+  void _loadNextQuiz() {
     currentQuiz++;
     print("loadNextQuiz");
     if ((_quizUrls.isNotEmpty) && (currentQuiz < _quizUrls.length)) {
-      statusLoad = StatusParseUnzippingStatus.loadQuiz;
+      statusLoad = StatusBackgroundAnalysis.searchQuiz;
       String urlQuiz = _quizUrls[currentQuiz].link;
       print("loadNextQuiz  " + _baseUrl + urlQuiz);
-      _controller.loadUrl(url: _baseUrl + urlQuiz);
+      controller.loadUrl(url: _baseUrl + urlQuiz);
       if (Platform.isIOS) {
-        _controller.reload();
+        controller.reload();
       }
     } else {
-      statusLoad = StatusParseUnzippingStatus.finishParseQuiz;
-      onFinishedParse(_quizUrls);
-      _controller.stopLoading();
-      _controller.clearCache();
+      _finishedAnalysis();
     }
   }
 
-  String getLink(dom.Element element) {
+  // Результат анализа курса
+  void _finishedAnalysis() {
+    statusLoad = StatusBackgroundAnalysis.finishParseQuiz;
+    if (onFinishedParse != null) onFinishedParse(_quizUrls);
+    controller.stopLoading();
+    controller.clearCache();
+  }
+
+  // получить ссылку из элемента
+  String _getLink(dom.Element element) {
     var searchLink = element.getElementsByClassName(_classLink);
     if ((searchLink != null) && (searchLink.isNotEmpty)) {
       String link = searchLink.first.attributes[_href];

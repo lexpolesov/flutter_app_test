@@ -13,10 +13,16 @@ class CourseCountQuestion {
   }
 }
 
-enum StatusParseUnzippingStatus {
+enum StatusBackgroundAnalysis {
   searchIndex,
+  loadIndex,
+parseIndex,
   foundIndex,
+  searchQuiz,
   loadQuiz,
+  parseQuiz,
+
+  //loadQuiz,
   finishParseQuiz
 }
 

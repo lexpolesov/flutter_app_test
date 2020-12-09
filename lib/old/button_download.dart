@@ -16,7 +16,7 @@ class ButtonDownloadArticulate extends StatefulWidget {
 class _ButtonDownloadArticulateState extends State<ButtonDownloadArticulate> {
   bool loading = false;
 
-  ParseFindQuestionCount packageParse;
+  AnalysisParseWebView packageParse;
 
   InAppWebViewController _webViewController;
 
@@ -27,7 +27,7 @@ class _ButtonDownloadArticulateState extends State<ButtonDownloadArticulate> {
   @override
   void initState() {
     super.initState();
-    packageParse = ParseFindQuestionCount(onFinishedParse: onFinishParse);
+    packageParse = AnalysisParseWebView(onFinishedParse: onFinishParse);
   }
 
   @override
@@ -75,7 +75,7 @@ class _ButtonDownloadArticulateState extends State<ButtonDownloadArticulate> {
                   },
                   onLoadStop: (InAppWebViewController controller, String url) {
                     print("onLoadStop " + url);
-                    packageParse.pageLoadStop(url);
+                   // packageParse.pageLoadStop(url);
                   },
                 ),
               ),
@@ -127,7 +127,7 @@ class _ButtonDownloadArticulateState extends State<ButtonDownloadArticulate> {
 
   Future<void> checkStatus() async {
     if (!loading) {
-      packageParse.addUrl(await getUrl());
+    //  packageParse.addUrl(await getUrl());
       setState(() {
         loading = true;
       });

@@ -1,22 +1,23 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutterapptest/parse_articulate/common/parse_webview.dart';
 
 import 'common.dart';
 import 'parse_find_question_count.dart';
 
 class ParseFindQuestionView extends StatefulWidget {
   final String url;
+  final bool isOffline;
   final Function(List<CourseCountQuestion>) onFinishedParse;
 
-  const ParseFindQuestionView(
-      {this.url = "", this.onFinishedParse});
+  const ParseFindQuestionView({this.url = "", this.onFinishedParse, this.isOffline});
 
   @override
   State<StatefulWidget> createState() => _ParseFindQuestionViewState();
 }
 
 class _ParseFindQuestionViewState extends State<ParseFindQuestionView> {
-  ParseFindQuestionCount packageParse;
+  ParseWebView packageParse;
 
   InAppWebViewController _webViewController;
 
@@ -24,7 +25,7 @@ class _ParseFindQuestionViewState extends State<ParseFindQuestionView> {
   void initState() {
     super.initState();
     packageParse =
-        ParseFindQuestionCount(onFinishedParse: widget.onFinishedParse);
+        AnalysisParseWebView(onFinishedParse: widget.onFinishedParse, isOffline: widget.isOffline);
   }
 
   @override
@@ -33,7 +34,7 @@ class _ParseFindQuestionViewState extends State<ParseFindQuestionView> {
       width: 1,
       height: 1,
       child: InAppWebView(
-        initialUrl: "",
+        initialUrl: widget.url,
         initialOptions: InAppWebViewGroupOptions(
             crossPlatform: InAppWebViewOptions(
                 mediaPlaybackRequiresUserGesture: true,
@@ -51,22 +52,20 @@ class _ParseFindQuestionViewState extends State<ParseFindQuestionView> {
         onWebViewCreated: (InAppWebViewController controller) {
           _webViewController = controller;
           packageParse.addController(controller);
-          packageParse.addUrl(widget.url);
         },
         onConsoleMessage:
             (InAppWebViewController controller, ConsoleMessage consoleMessage) {
-          print(consoleMessage);
-        },
-        onLoadStart: (InAppWebViewController controller, String url) {
-          print("load start " + url);
+          packageParse.onConsoleMessage(consoleMessage);
         },
         onLoadError: (InAppWebViewController controller, String url, int code,
             String message) {
           print("error message " + message);
+          packageParse.onLoadError(url, code, message);
         },
         onLoadStop: (InAppWebViewController controller, String url) {
           print("onLoadStop " + url);
-          packageParse.pageLoadStop(url);
+          packageParse.onLoadStop(url);
+          //packageParse.pageLoadStop(url);
         },
       ),
     );
